@@ -1,0 +1,5 @@
+add_library(app
+    fractal_app.h
+    fractal_app.cpp)
+
+target_link_libraries(app PRIVATE ui)

@@ -1,20 +1,12 @@
 #include <QApplication>
-#include <QMainWindow>
-#include <QLabel>
 
-int main(int argc, char* argv[])
-{
-    QApplication app(argc, argv);
+#include "app/fractal_app.h"
 
-    QMainWindow window;
-    window.setWindowTitle("Qt Test");
+int main(int argc, char* argv[]) {
+  QApplication qt(argc, argv);
 
-    QLabel* label = new QLabel("Hello, World!");
-    label->setAlignment(Qt::AlignCenter);
+  FractalApp app;
+  app.Run();
 
-    window.setCentralWidget(label);
-    window.resize(600, 400);
-    window.show();
-
-    return app.exec();
+  return qt.exec();
 }

@@ -1,10 +1,14 @@
+add_subdirectory(render)
+add_subdirectory(ui)
+add_subdirectory(app)
+
 qt_add_executable(${PROJECT_NAME}
     main.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    Qt6::Widgets
-)
+    app
+    Qt6::Widgets)
 
 if(WIN32)
     get_target_property(_qt_lib_dir Qt6::Widgets LOCATION)
