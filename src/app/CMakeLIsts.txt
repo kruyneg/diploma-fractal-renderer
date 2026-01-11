@@ -3,3 +3,7 @@ add_library(app
     fractal_app.cpp)
 
 target_link_libraries(app PRIVATE ui)
+
+if(ENABLE_CUDA)
+    target_link_libraries(app PRIVATE render_cuda)
+endif()

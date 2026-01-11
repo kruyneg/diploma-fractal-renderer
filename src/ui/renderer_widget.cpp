@@ -15,6 +15,10 @@ void RendererWidget::initializeGL() {
   glDisable(GL_CULL_FACE);
 
   texture_.Init();
+  texture_.Resize(100, 100);
+
+  renderer_->Init(texture_.texture());
+
   InitShader();
   InitQuad();
 }
@@ -84,7 +88,7 @@ void RendererWidget::resizeGL(int w, int h) {
 
 void RendererWidget::paintGL() {
   if (renderer_) {
-    renderer_->Render(&texture_);
+    renderer_->Render();
   }
   DrawTexture();
 }
