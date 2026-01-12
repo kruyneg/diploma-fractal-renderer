@@ -1,7 +1,6 @@
-#include "render/cuda/cuda_renderer.h"
-
 #include <stdexcept>
 
+#include "render/cuda/cuda_renderer.h"
 #include "render/cuda/utils.h"
 #include "render/fractals.h"
 
@@ -13,24 +12,32 @@
 
 namespace {
 
-__global__ void MandelbrotKernel(cudaSurfaceObject_t surf, int w, int h) {
+__global__ void MandelbrotKernel(cudaSurfaceObject_t surf, int w, int h,
+                                 render::RenderSettings settings) {
   int x = blockIdx.x * blockDim.x + threadIdx.x;
   int y = blockIdx.y * blockDim.y + threadIdx.y;
 
   if (x >= w || y >= h) return;
 
-  float fx = static_cast<float>(x) / static_cast<float>(w) * 3.5f - 2.5f;
-  float fy = static_cast<float>(y) / static_cast<float>(h) * 2.0f - 1.0f;
+  double fx = static_cast<double>(x) / static_cast<double>(w) *
+                  (settings.max_x - settings.min_x) +
+              settings.min_x;
+  double fy = static_cast<double>(y) / static_cast<double>(h) *
+                  (settings.max_y - settings.min_y) +
+              settings.min_y;
 
-  const int kMaxIter = 128;
-  const int iteration = MandelbrotIterations({fx, fy}, kMaxIter);
-  Color color = ColorFromIter(iteration, kMaxIter);
+  const int iteration = render::MandelbrotIterations(fx, fy, settings.max_iter);
+  Color color =
+      render::ColorFromIter(iteration, settings.max_iter, Color{255, 0, 0, 255},
+                            Color{0, 0, 255, 255});
 
   uchar4 c = {color.r, color.g, color.b, color.a};
   surf2Dwrite(c, surf, x * sizeof(Color), y, cudaBoundaryModeTrap);
 }
 
 }  // namespace
+
+namespace render {
 
 CUDARenderer::CUDARenderer() = default;
 
@@ -81,7 +88,8 @@ void CUDARenderer::Render() {
   dim3 grid((width_ + block.x - 1) / block.x,
             (height_ + block.y - 1) / block.y);
 
-  MandelbrotKernel<<<grid, block>>>(surf, width_, height_);
+  MandelbrotKernel<<<grid, block>>>(surf, width_, height_,
+                                    settings_provider_->GetSettings());
 
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
@@ -92,3 +100,9 @@ void CUDARenderer::Render() {
 
   glFlush();
 }
+
+void CUDARenderer::SetSettingsProvider(SettingsProvider* settings) {
+  settings_provider_ = settings;
+}
+
+}  // namespace render

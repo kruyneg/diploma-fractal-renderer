@@ -3,11 +3,11 @@
 #include "QOpenGLFunctions"
 #include "render/fractals.h"
 
+namespace render {
+
 CPURenderer::CPURenderer() = default;
 
-void CPURenderer::Init(uint32_t target_tex_id) {
-  target_ = target_tex_id;
-}
+void CPURenderer::Init(uint32_t target_tex_id) { target_ = target_tex_id; }
 
 void CPURenderer::Resize(uint32_t w, uint32_t h) {
   width_ = w;
@@ -21,26 +21,23 @@ void CPURenderer::Render() {
     return;
   }
 
-  const int max_iter = 128;
+  const auto settings = settings_->GetSettings();
 
-  const double min_re = -2.5;
-  const double max_re = 1.0;
-  const double min_im = -1.0;
-  const double max_im = 1.0;
-
-  const double scale_re = (max_re - min_re) / static_cast<double>(width_);
-  const double scale_im = (max_im - min_im) / static_cast<double>(height_);
+  const double scale_x =
+      (settings.max_x - settings.min_x) / static_cast<double>(width_);
+  const double scale_y =
+      (settings.max_y - settings.min_y) / static_cast<double>(height_);
 
   for (uint32_t y = 0; y < height_; ++y) {
-    double c_im = max_im - y * scale_im;
+    double c_im = settings.max_y - y * scale_y;
 
     for (uint32_t x = 0; x < width_; ++x) {
-      double c_re = min_re + x * scale_re;
+      double c_re = settings.min_x + x * scale_x;
 
-      const int iteration = MandelbrotIterations({c_re, c_im}, max_iter);
+      const int iteration = MandelbrotIterations(c_re, c_im, settings.max_iter);
       Color& c = buffer_[y * width_ + x];
 
-      c = ColorFromIter(iteration, max_iter);
+      c = ColorFromIter(iteration, settings.max_iter);
     }
   }
 
@@ -63,3 +60,9 @@ void CPURenderer::UploadBufferToTarget() const {
 
   gl->glBindTexture(GL_TEXTURE_2D, 0);
 }
+
+void CPURenderer::SetSettingsProvider(SettingsProvider* settings) {
+  settings_ = settings;
+}
+
+}  // namespace render

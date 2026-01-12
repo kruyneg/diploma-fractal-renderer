@@ -1,11 +1,11 @@
-#include "ui/renderer_widget.h"
+#include "app/ui/renderer_widget.h"
 
-#include "ui/fractal_window.h"
+#include "app/ui/fractal_window.h"
 
 namespace ui {
 
 RendererWidget::RendererWidget(FractalWindow* parent /* = nullptr */,
-                               Renderer* renderer /* = nullptr */)
+                               render::Renderer* renderer /* = nullptr */)
     : QOpenGLWidget(parent), renderer_(renderer) {}
 
 void RendererWidget::initializeGL() {

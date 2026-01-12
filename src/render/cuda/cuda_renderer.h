@@ -4,6 +4,8 @@
 
 #include "render/renderer.h"
 
+namespace render {
+
 class CUDARenderer : public Renderer {
  public:
   CUDARenderer();
@@ -12,13 +14,17 @@ class CUDARenderer : public Renderer {
   void Init(uint32_t target_tex_id) override;
   void Resize(uint32_t w, uint32_t h) override;
   void Render() override;
+  void SetSettingsProvider(SettingsProvider* settings) override;
 
  private:
   uint32_t width_ = 0;
   uint32_t height_ = 0;
 
-  // cudaGraphicsResource* cuda_resource_ = nullptr;
+  SettingsProvider* settings_provider_ = nullptr;
+
   uint32_t gl_tex_id_ = 0;
 
   bool initialized_ = false;
 };
+
+}  // namespace render

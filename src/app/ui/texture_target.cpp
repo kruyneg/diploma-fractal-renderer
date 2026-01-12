@@ -1,4 +1,6 @@
-#include "render/texture_target.h"
+#include "app/ui/texture_target.h"
+
+namespace ui {
 
 TextureTarget::TextureTarget() = default;
 TextureTarget::~TextureTarget() = default;
@@ -72,3 +74,5 @@ void TextureTarget::Destroy() {
 GLuint TextureTarget::texture() const { return texture_id_; }
 uint32_t TextureTarget::width() const { return width_; }
 uint32_t TextureTarget::height() const { return height_; }
+
+}  // namespace ui

@@ -4,9 +4,8 @@
 #include <QOpenGLShaderProgram>
 #include <QtOpenGLWidgets/QOpenGLWidget>
 
+#include "app/ui/texture_target.h"
 #include "render/renderer.h"
-#include "render/texture_target.h"
-
 
 namespace ui {
 
@@ -16,7 +15,8 @@ class RendererWidget : public QOpenGLWidget,
                        protected QOpenGLFunctions_3_3_Core {
   Q_OBJECT
  public:
-  RendererWidget(FractalWindow* parent = nullptr, Renderer* renderer = nullptr);
+  RendererWidget(FractalWindow* parent = nullptr,
+                 render::Renderer* renderer = nullptr);
 
  protected:
   void initializeGL() override;
@@ -29,7 +29,7 @@ class RendererWidget : public QOpenGLWidget,
 
   void DrawTexture();
 
-  Renderer* renderer_;
+  render::Renderer* renderer_;
   TextureTarget texture_;
 
   QOpenGLShaderProgram shader_;

@@ -1,8 +1,8 @@
 add_library(render
     renderer.h
     utils.h
-    texture_target.h
-    texture_target.cpp)
+    fractals.h
+    settings_provider.h)
 
 add_subdirectory(cpu)
 

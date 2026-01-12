@@ -3,6 +3,8 @@
 #include <QOpenGLFunctions>
 #include <cstdint>
 
+namespace ui {
+
 class TextureTarget {
  public:
   TextureTarget();
@@ -27,3 +29,5 @@ class TextureTarget {
   uint32_t width_ = 0;
   uint32_t height_ = 0;
 };
+
+}  // namespace ui
