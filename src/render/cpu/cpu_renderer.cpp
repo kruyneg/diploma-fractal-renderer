@@ -24,20 +24,28 @@ void CPURenderer::Render() {
   const auto settings = settings_->GetSettings();
 
   const double scale_x =
-      (settings.max_x - settings.min_x) / static_cast<double>(width_);
-  const double scale_y =
-      (settings.max_y - settings.min_y) / static_cast<double>(height_);
+      (settings.view.max_x - settings.view.min_x) / static_cast<double>(width_);
+  const double scale_y = (settings.view.max_y - settings.view.min_y) /
+                         static_cast<double>(height_);
 
   for (uint32_t y = 0; y < height_; ++y) {
-    double c_im = settings.max_y - y * scale_y;
+    double fy = settings.view.max_y - y * scale_y;
 
     for (uint32_t x = 0; x < width_; ++x) {
-      double c_re = settings.min_x + x * scale_x;
+      double fx = settings.view.min_x + x * scale_x;
 
-      const int iteration = MandelbrotIterations(c_re, c_im, settings.max_iter);
+      int iteration;
+      if (settings.fractal.type == FractalType::kMandelbrot) {
+        iteration =
+            MandelbrotIterations(fx, fy, settings.fractal.max_iterations);
+      } else if (settings.fractal.type == FractalType::kJulia) {
+        iteration = JuliaIterations(fx, fy, settings.fractal.max_iterations,
+                                    settings.fractal.julia.c_re,
+                                    settings.fractal.julia.c_im);
+      }
       Color& c = buffer_[y * width_ + x];
 
-      c = ColorFromIter(iteration, settings.max_iter);
+      c = ColorFromIter(iteration, settings.fractal.max_iterations);
     }
   }
 

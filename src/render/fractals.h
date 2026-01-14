@@ -26,6 +26,21 @@ MAYBE_DEVICE inline int MandelbrotIterations(double x, double y, int max_iter) {
   return i;
 }
 
+MAYBE_DEVICE inline int JuliaIterations(double x, double y, int max_iter,
+                                        double c_re = -0.8,
+                                        double c_im = 0.156) {
+  int i = 0;
+
+  while (x * x + y * y <= 4.0 && i < max_iter) {
+    const double x_new = x * x - y * y + c_re;
+    y = 2.0 * x * y + c_im;
+    x = x_new;
+
+    ++i;
+  }
+  return i;
+}
+
 MAYBE_DEVICE inline Color ColorFromIter(
     int iter, int max_iter, Color target = Color{255, 255, 255, 255},
     Color background = Color{0, 0, 0, 255}) {

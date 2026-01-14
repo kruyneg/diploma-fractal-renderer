@@ -4,13 +4,33 @@
 
 namespace render {
 
-struct RenderSettings {
-  uint32_t max_iter;
+enum class FractalType : uint8_t {
+  kMandelbrot,
+  kJulia,
+};
 
-  double min_x;
-  double min_y;
-  double max_x;
-  double max_y;
+struct JuliaParams {
+  double c_re = -0.8;
+  double c_im = 0.156;
+};
+
+struct FractalSettings {
+  FractalType type = FractalType::kJulia;
+  uint32_t max_iterations = 128;
+
+  JuliaParams julia;
+};
+
+struct ViewSettings {
+  double min_x = -1.0;
+  double min_y = -1.0;
+  double max_x = 1.0;
+  double max_y = 1.0;
+};
+
+struct RenderSettings {
+  ViewSettings view;
+  FractalSettings fractal;
 };
 
 class SettingsProvider {

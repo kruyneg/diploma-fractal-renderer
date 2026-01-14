@@ -1,6 +1,7 @@
+#include "render/cuda/cuda_renderer.h"
+
 #include <stdexcept>
 
-#include "render/cuda/cuda_renderer.h"
 #include "render/cuda/utils.h"
 #include "render/fractals.h"
 
@@ -20,16 +21,24 @@ __global__ void MandelbrotKernel(cudaSurfaceObject_t surf, int w, int h,
   if (x >= w || y >= h) return;
 
   double fx = static_cast<double>(x) / static_cast<double>(w) *
-                  (settings.max_x - settings.min_x) +
-              settings.min_x;
+                  (settings.view.max_x - settings.view.min_x) +
+              settings.view.min_x;
   double fy = static_cast<double>(y) / static_cast<double>(h) *
-                  (settings.max_y - settings.min_y) +
-              settings.min_y;
+                  (settings.view.max_y - settings.view.min_y) +
+              settings.view.min_y;
 
-  const int iteration = render::MandelbrotIterations(fx, fy, settings.max_iter);
+  int iteration;
+  if (settings.fractal.type == render::FractalType::kMandelbrot) {
+    iteration =
+        render::MandelbrotIterations(fx, fy, settings.fractal.max_iterations);
+  } else if (settings.fractal.type == render::FractalType::kJulia) {
+    iteration = render::JuliaIterations(fx, fy, settings.fractal.max_iterations,
+                                        settings.fractal.julia.c_re,
+                                        settings.fractal.julia.c_im);
+  }
   Color color =
-      render::ColorFromIter(iteration, settings.max_iter, Color{255, 0, 0, 255},
-                            Color{0, 0, 255, 255});
+      render::ColorFromIter(iteration, settings.fractal.max_iterations,
+                            Color{255, 0, 255, 255}, Color{100, 255, 100, 255});
 
   uchar4 c = {color.r, color.g, color.b, color.a};
   surf2Dwrite(c, surf, x * sizeof(Color), y, cudaBoundaryModeTrap);

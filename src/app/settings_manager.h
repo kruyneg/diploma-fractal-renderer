@@ -13,12 +13,12 @@ class SettingsManager : public render::SettingsProvider {
   void Zoom(double factor);
   void Move(double x, double y);
   void Resize(uint32_t w, uint32_t h);
+  void SetFractalType(uint8_t type);
 
   render::RenderSettings GetSettings() override;
 
  private:
   render::RenderSettings settings_;
-  double aspect_ratio_ = 1.0;
 
   std::vector<std::function<void()>> observers_;
 };
