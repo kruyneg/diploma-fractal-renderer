@@ -1,0 +1,11 @@
+qt_add_library(app STATIC
+    fractal_app.h
+    fractal_app.cpp
+    settings_manager.h
+    settings_manager.cpp)
+
+add_subdirectory(ui)
+
+if(ENABLE_CUDA)
+    target_link_libraries(app PRIVATE render_cuda)
+endif()
