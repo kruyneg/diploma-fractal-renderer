@@ -18,10 +18,15 @@ class RendererWidget : public QOpenGLWidget,
   RendererWidget(FractalWindow* parent = nullptr,
                  render::Renderer* renderer = nullptr);
 
+ signals:
+  void ViewResized(uint32_t w, uint32_t h);
+
  protected:
   void initializeGL() override;
   void resizeGL(int w, int h) override;
   void paintGL() override;
+
+  void resizeEvent(QResizeEvent* event) override;
 
  private:
   void InitShader();

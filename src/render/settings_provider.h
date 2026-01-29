@@ -15,7 +15,7 @@ struct JuliaParams {
 };
 
 struct FractalSettings {
-  FractalType type = FractalType::kJulia;
+  FractalType type = FractalType::kMandelbrot;
   uint32_t max_iterations = 128;
 
   JuliaParams julia;

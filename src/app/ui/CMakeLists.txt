@@ -6,7 +6,9 @@ target_sources(app PRIVATE
     texture_target.h
     texture_target.cpp
     input_controller.h
-    input_controller.cpp)
+    input_controller.cpp
+    settings_widget.h
+    settings_widget.cpp)
 
 target_link_libraries(app PRIVATE
     Qt6::Widgets

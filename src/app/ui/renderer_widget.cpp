@@ -1,12 +1,16 @@
 #include "app/ui/renderer_widget.h"
 
+#include <QResizeEvent>
+
 #include "app/ui/fractal_window.h"
 
 namespace ui {
 
 RendererWidget::RendererWidget(FractalWindow* parent /* = nullptr */,
                                render::Renderer* renderer /* = nullptr */)
-    : QOpenGLWidget(parent), renderer_(renderer) {}
+    : QOpenGLWidget(parent), renderer_(renderer) {
+  setFocusPolicy(Qt::StrongFocus);
+}
 
 void RendererWidget::initializeGL() {
   initializeOpenGLFunctions();
@@ -91,6 +95,13 @@ void RendererWidget::paintGL() {
     renderer_->Render();
   }
   DrawTexture();
+}
+
+void RendererWidget::resizeEvent(QResizeEvent* event) {
+  QOpenGLWidget::resizeEvent(event);
+
+  const auto size = event->size();
+  emit ViewResized(size.width(), size.height());
 }
 
 void RendererWidget::DrawTexture() {
