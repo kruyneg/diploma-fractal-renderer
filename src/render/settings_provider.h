@@ -2,11 +2,14 @@
 
 #include <cstdint>
 
+#include "render/common/types.h"
+
 namespace render {
 
 enum class FractalType : uint8_t {
   kMandelbrot,
   kJulia,
+  kMengerSponge,
 };
 
 struct JuliaParams {
@@ -16,20 +19,20 @@ struct JuliaParams {
 
 struct FractalSettings {
   FractalType type = FractalType::kMandelbrot;
-  uint32_t max_iterations = 128;
+  uint32_t max_iterations = 5;
 
   JuliaParams julia;
 };
 
-struct ViewSettings {
-  double min_x = -1.0;
-  double min_y = -1.0;
-  double max_x = 1.0;
-  double max_y = 1.0;
+struct CameraSettings {
+  Vector3d position = {0.0, 0.0, 0.0};
+  Vector3d direction = {0.0, 1.0, 0.0};
+  double scale = 1.0;
+  double aspect = 1.0;
 };
 
 struct RenderSettings {
-  ViewSettings view;
+  CameraSettings camera;
   FractalSettings fractal;
 };
 

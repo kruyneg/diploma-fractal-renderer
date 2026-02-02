@@ -2,15 +2,20 @@
 
 #include <cstdint>
 
-#include "render/utils.h"
-
-#ifdef __CUDACC__
-#define MAYBE_DEVICE __host__ __device__
-#else
-#define MAYBE_DEVICE
-#endif
+#include "render/common/types.h"
+#include "render/settings_provider.h"
 
 namespace render {
+
+MAYBE_DEVICE inline bool Is2DFractal(FractalType type) {
+  switch (type) {
+    case FractalType::kMandelbrot:
+    case FractalType::kJulia:
+      return true;
+    default:
+      return false;
+  }
+}
 
 MAYBE_DEVICE inline int MandelbrotIterations(double x, double y, int max_iter) {
   double zr = 0.0;
@@ -55,6 +60,34 @@ MAYBE_DEVICE inline Color ColorFromIter(
   uint8_t b = static_cast<uint8_t>(t * target.b + (1.0 - t) * background.b);
 
   return Color{r, g, b, 255};
+}
+
+MAYBE_DEVICE inline double BoxSDF(const Vector3d& p, const Vector3d& b) {
+  auto q = Abs(p) - b;
+  return Length({fmax(q.x, 0.0), fmax(q.y, 0.0), fmax(q.z, 0.0)}) +
+         fmin(fmax(q.x, fmax(q.y, q.z)), 0.0);
+}
+
+MAYBE_DEVICE inline double MengerSpongeSDF(Vector3d p, int iterations) {
+  double d = BoxSDF(p, {1.0, 1.0, 1.0});
+  p = Abs(p);
+
+  double scale = 1.0;
+  for (int m = 0; m < iterations; m++) {
+    Vector3d a = {fmod(p.x * scale, 2.0) - 1.0, fmod(p.y * scale, 2.0) - 1.0,
+                  fmod(p.z * scale, 2.0) - 1.0};
+    scale *= 3.0;
+    Vector3d r = Abs(Vector3d{1.0, 1.0, 1.0} - Abs(a) * 3.0);
+
+    double da = fmax(r.x, r.y);
+    double db = fmax(r.y, r.z);
+    double dc = fmax(r.z, r.x);
+    double c = (fmin(da, fmin(db, dc)) - 1.0) / scale;
+
+    d = fmax(d, c);
+  }
+
+  return d;
 }
 
 }  // namespace render

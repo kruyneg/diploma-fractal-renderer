@@ -2,8 +2,8 @@
 
 #include <vector>
 
+#include "render/common/types.h"
 #include "render/renderer.h"
-#include "render/utils.h"
 
 namespace render {
 

@@ -91,6 +91,9 @@ void SettingsWidget::BuildUI() {
       "Mandelbrot", static_cast<uint8_t>(render::FractalType::kMandelbrot));
   fractal_combo_->addItem("Julia",
                           static_cast<uint8_t>(render::FractalType::kJulia));
+  fractal_combo_->addItem(
+      "Menger Sponge",
+      static_cast<uint8_t>(render::FractalType::kMengerSponge));
 
   connect(fractal_combo_, QOverload<int>::of(&QComboBox::currentIndexChanged),
           this, &SettingsWidget::OnFractalTypeChanged);
@@ -98,7 +101,7 @@ void SettingsWidget::BuildUI() {
   top_form->addRow("Fractal Type", fractal_combo_);
 
   iterations_spin_ = new QSpinBox(this);
-  iterations_spin_->setRange(16, 256);
+  iterations_spin_->setRange(1, 256);
   connect(iterations_spin_, &QSpinBox::valueChanged, this,
           &SettingsWidget::OnIterationsChanged);
 
@@ -116,6 +119,8 @@ void SettingsWidget::BuildUI() {
   fractal_stack_->addWidget(new QWidget(this));
 
   fractal_stack_->addWidget(new JuliaSettingsWidget(this, settings_manager_));
+
+  fractal_stack_->addWidget(new QWidget(this));
 
   layout->addStretch(1);
 }

@@ -1,7 +1,8 @@
 #include "render/cpu/cpu_renderer.h"
 
 #include "QOpenGLFunctions"
-#include "render/fractals.h"
+#include "render/common/fractals.h"
+#include "render/common/utils.h"
 
 namespace render {
 
@@ -23,25 +24,18 @@ void CPURenderer::Render() {
 
   const auto settings = settings_->GetSettings();
 
-  const double scale_x =
-      (settings.view.max_x - settings.view.min_x) / static_cast<double>(width_);
-  const double scale_y = (settings.view.max_y - settings.view.min_y) /
-                         static_cast<double>(height_);
-
   for (uint32_t y = 0; y < height_; ++y) {
-    double fy = settings.view.max_y - y * scale_y;
-
     for (uint32_t x = 0; x < width_; ++x) {
-      double fx = settings.view.min_x + x * scale_x;
+      const auto pos = PixelToPosition(x, y, width_, height_, settings.camera);
 
       int iteration;
       if (settings.fractal.type == FractalType::kMandelbrot) {
         iteration =
-            MandelbrotIterations(fx, fy, settings.fractal.max_iterations);
+            MandelbrotIterations(pos.x, pos.y, settings.fractal.max_iterations);
       } else if (settings.fractal.type == FractalType::kJulia) {
-        iteration = JuliaIterations(fx, fy, settings.fractal.max_iterations,
-                                    settings.fractal.julia.c_re,
-                                    settings.fractal.julia.c_im);
+        iteration = JuliaIterations(
+            pos.x, pos.y, settings.fractal.max_iterations,
+            settings.fractal.julia.c_re, settings.fractal.julia.c_im);
       }
       Color& c = buffer_[y * width_ + x];
 
