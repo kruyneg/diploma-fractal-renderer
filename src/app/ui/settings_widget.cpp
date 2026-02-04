@@ -2,6 +2,7 @@
 
 #include <QComboBox>
 #include <QFormLayout>
+#include <QLabel>
 #include <QSpinBox>
 #include <QStackedWidget>
 #include <QVBoxLayout>
@@ -81,6 +82,10 @@ void SettingsWidget::SyncWithSettings() {
   iterations_spin_->setValue(settings.fractal.max_iterations);
 }
 
+void SettingsWidget::SetFrameStats(double ms, double fps) {
+  fps_label_->setText(QString("Render Time: %1\nFPS: %2").arg(ms).arg(fps));
+}
+
 void SettingsWidget::BuildUI() {
   auto* layout = new QVBoxLayout(this);
 
@@ -122,7 +127,10 @@ void SettingsWidget::BuildUI() {
 
   fractal_stack_->addWidget(new QWidget(this));
 
-  layout->addStretch(1);
+  layout->addStretch();
+
+  fps_label_ = new QLabel(this);
+  layout->addWidget(fps_label_);
 }
 
 void SettingsWidget::OnFractalTypeChanged(int index) {

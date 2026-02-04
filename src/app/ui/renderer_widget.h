@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QElapsedTimer>
 #include <QOpenGLFunctions_3_3_Core>
 #include <QOpenGLShaderProgram>
 #include <QtOpenGLWidgets/QOpenGLWidget>
@@ -23,6 +24,7 @@ class RendererWidget : public QOpenGLWidget,
 
  signals:
   void ViewResized(uint32_t w, uint32_t h);
+  void FrameStatsUpdated(double ms, double fps);
 
  protected:
   void initializeGL() override;
@@ -47,6 +49,8 @@ class RendererWidget : public QOpenGLWidget,
   InputController* input_controller_;
   bool mouse_locked_ = false;
   bool ignore_next_mouse_event_ = false;
+
+  QElapsedTimer frame_timer_;
 
   render::Renderer* renderer_;
   TextureTarget texture_;

@@ -26,6 +26,9 @@ FractalWindow::FractalWindow(FractalApp* app) : app_(app) {
                                   Qt::RightDockWidgetArea);
   settings_dock_->setFloating(false);
 
+  connect(renderer_widget_, &RendererWidget::FrameStatsUpdated,
+          settings_widget_, &SettingsWidget::SetFrameStats);
+
   app_->settings().AddObserver([this] { renderer_widget_->update(); });
   app_->settings().AddObserver(
       [this] { settings_widget_->SyncWithSettings(); });

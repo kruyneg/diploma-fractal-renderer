@@ -83,8 +83,10 @@ void SettingsManager::Resize(uint32_t w, uint32_t h) {
 }
 
 void SettingsManager::SetFractalType(uint8_t type) {
+  const auto current_aspect = pending_.camera.aspect;
   pending_ = render::RenderSettings{};
   pending_.fractal.type = render::FractalType(type);
+  pending_.camera.aspect = current_aspect;
   need_commit_ = true;
 }
 

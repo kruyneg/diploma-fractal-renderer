@@ -7,7 +7,6 @@
 #include "app/ui/fractal_window.h"
 #include "app/ui/input_controller.h"
 
-
 namespace ui {
 
 RendererWidget::RendererWidget(FractalWindow* parent /* = nullptr */,
@@ -102,10 +101,16 @@ void RendererWidget::resizeGL(int w, int h) {
 }
 
 void RendererWidget::paintGL() {
+  frame_timer_.restart();
+
   if (renderer_) {
     renderer_->Render();
   }
   DrawTexture();
+
+  const double frame_ms = frame_timer_.nsecsElapsed() * 1e-6;
+  const double fps = 1000.0 / frame_ms;
+  emit FrameStatsUpdated(frame_ms, fps);
 }
 
 void RendererWidget::resizeEvent(QResizeEvent* event) {
