@@ -8,6 +8,7 @@ namespace {
 
 constexpr double kMoveSpeed = 1.0;
 constexpr double kZoomSpeed = 1.2;
+constexpr double kMouseSensitivity = 0.002;
 
 }  // namespace
 
@@ -26,6 +27,15 @@ void InputController::HandleKeyPress(QKeyEvent* event) {
 void InputController::HandleKeyRelease(QKeyEvent* event) {
   if (!event->isAutoRepeat()) {
     pressed_keys_.remove(event->key());
+  }
+}
+
+void InputController::MouseMove(int dx, int dy) {
+  const double yaw = -dx * kMouseSensitivity;
+  const double pitch = -dy * kMouseSensitivity;
+
+  if (yaw != 0.0 || pitch != 0.0) {
+    settings_manager_->RotateCamera(yaw, pitch);
   }
 }
 
