@@ -68,14 +68,15 @@ MAYBE_DEVICE inline double BoxSDF(const Vector3d& p, const Vector3d& b) {
          fmin(fmax(q.x, fmax(q.y, q.z)), 0.0);
 }
 
-MAYBE_DEVICE inline double MengerSpongeSDF(Vector3d p, int iterations) {
-  double d = BoxSDF(p, {1.0, 1.0, 1.0});
-  p = Abs(p);
+MAYBE_DEVICE inline double MengerSpongeSDF(Vector3d pos, int iterations) {
+  double d = BoxSDF(pos, {1.0, 1.0, 1.0});
+  pos = Abs(pos);
 
   double scale = 1.0;
   for (int m = 0; m < iterations; m++) {
-    Vector3d a = {fmod(p.x * scale, 2.0) - 1.0, fmod(p.y * scale, 2.0) - 1.0,
-                  fmod(p.z * scale, 2.0) - 1.0};
+    Vector3d a = {fmod(pos.x * scale, 2.0) - 1.0,
+                  fmod(pos.y * scale, 2.0) - 1.0,
+                  fmod(pos.z * scale, 2.0) - 1.0};
     scale *= 3.0;
     Vector3d r = Abs(Vector3d{1.0, 1.0, 1.0} - Abs(a) * 3.0);
 
@@ -88,6 +89,37 @@ MAYBE_DEVICE inline double MengerSpongeSDF(Vector3d p, int iterations) {
   }
 
   return d;
+}
+
+MAYBE_DEVICE inline double MandelbulbSDF(const Vector3d& pos, int iterations,
+                                         double power = 8.0,
+                                         double bailout = 2.0) {
+  Vector3d z = pos;
+  double dr = 1.0;
+  double r;
+
+  for (int i = 0; i < iterations; ++i) {
+    r = Length(z);
+    if (r > bailout) {
+      break;
+    }
+
+    double theta = acos(z.z / r);
+    double phi = atan2(z.y, z.x);
+
+    double zr = pow(r, power - 1.0);
+    dr = zr * power * dr + 1.0;
+    zr *= r;
+    theta *= power;
+    phi *= power;
+
+    z = {zr * sin(theta) * cos(phi), zr * sin(theta) * sin(phi),
+         zr * cos(theta)};
+
+    z = z + pos;
+  }
+
+  return 0.5 * log(r) * r / dr;
 }
 
 }  // namespace render

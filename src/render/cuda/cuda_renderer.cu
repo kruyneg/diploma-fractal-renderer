@@ -1,8 +1,9 @@
+#include "render/cuda/cuda_renderer.h"
+
 #include <stdexcept>
 
 #include "render/common/fractals.h"
 #include "render/common/utils.h"
-#include "render/cuda/cuda_renderer.h"
 #include "render/cuda/utils.h"
 
 #ifdef _WIN32
@@ -53,19 +54,23 @@ __global__ void RayMarchingKernel(cudaSurfaceObject_t surf, int w, int h,
   Color color = {0, 0, 0, 255};
 
   double t = 0.0;
-  for (int i = 0; i < 100 && t < 3.0; ++i) {
+  const int max_steps = 100;
+  const double min_dist = 0.001;
+  const float max_dist = 13.0;
+  for (int i = 0; i < max_steps; ++i) {
     const auto pos = ray.position + ray.direction * t;
     const auto distance = render::CalculateSignedDistance(pos, settings);
-    if (distance < 1e-5) {
+    if (distance < min_dist) {
       auto norm = render::GetNormal(pos, settings);
-      norm = Abs(norm);
-      if (norm.x > norm.y && norm.x > norm.z) {
-        color = Color{255, 0, 0, 255};
-      } else if (norm.y > norm.x && norm.y > norm.z) {
-        color = Color{0, 255, 0, 255};
-      } else {
-        color = Color{0, 0, 255, 255};
-      }
+      norm = norm * 0.5 + Vector3d{0.5, 0.5, 0.5};
+      norm = norm * 255;
+      color.r = norm.x;
+      color.g = norm.y;
+      color.b = norm.z;
+
+      break;
+    }
+    if (distance > max_dist) {
       break;
     }
     t += distance;

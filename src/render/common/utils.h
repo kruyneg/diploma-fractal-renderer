@@ -39,6 +39,10 @@ MAYBE_DEVICE inline double CalculateSignedDistance(
   switch (settings.fractal.type) {
     case FractalType::kMengerSponge:
       return MengerSpongeSDF(position, settings.fractal.max_iterations);
+    case FractalType::kMandelbulb:
+      return MandelbulbSDF(position, settings.fractal.max_iterations,
+                           settings.fractal.mandelbulb.power,
+                           settings.fractal.mandelbulb.boilout);
     default:
       return 100.0;
   }
@@ -46,7 +50,7 @@ MAYBE_DEVICE inline double CalculateSignedDistance(
 
 MAYBE_DEVICE inline Vector3d GetNormal(const Vector3d& position,
                                        const RenderSettings& settings) {
-  constexpr double eps = 1e-5;
+  constexpr double eps = 1e-3;
   double dx =
       CalculateSignedDistance(position + Vector3d{eps, 0.0, 0.0}, settings) -
       CalculateSignedDistance(position - Vector3d{eps, 0.0, 0.0}, settings);

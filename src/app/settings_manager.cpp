@@ -2,7 +2,6 @@
 
 #include "render/common/fractals.h"
 
-
 namespace {
 
 constexpr Vector3d kWorldUp{0.0, 0.0, 1.0};
@@ -97,6 +96,11 @@ void SettingsManager::SetMaxIterations(uint32_t iterations) {
 
 void SettingsManager::SetJuliaParams(render::JuliaParams params) {
   pending_.fractal.julia = params;
+  need_commit_ = true;
+}
+
+void SettingsManager::SetMandelbulbParams(render::MandelbulbParams params) {
+  pending_.fractal.mandelbulb = params;
   need_commit_ = true;
 }
 

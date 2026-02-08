@@ -17,6 +17,7 @@ class SettingsManager : public render::SettingsProvider {
   void SetFractalType(uint8_t type);
   void SetMaxIterations(uint32_t iterations);
   void SetJuliaParams(render::JuliaParams params);
+  void SetMandelbulbParams(render::MandelbulbParams params);
 
   void Commit();
 

@@ -59,6 +59,51 @@ class JuliaSettingsWidget final : public QWidget {
   SettingsManager* settings_;
 };
 
+class MandelbulbSettingsWidget final : public QWidget {
+  Q_OBJECT
+ public:
+  explicit MandelbulbSettingsWidget(QWidget* parent, SettingsManager* settings)
+      : QWidget(parent), settings_(settings) {
+    auto* layout = new QFormLayout(this);
+
+    power_ = new QDoubleSpinBox(this);
+    power_->setRange(1.0, 15.0);
+    power_->setSingleStep(1.0);
+    boilout_ = new QDoubleSpinBox(this);
+    boilout_->setRange(0, 5.0);
+    boilout_->setSingleStep(1.0);
+
+    layout->addRow("Power", power_);
+    layout->addRow("Boilout", boilout_);
+
+    connect(power_, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+            &MandelbulbSettingsWidget::OnParamsChanged);
+    connect(boilout_, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            this, &MandelbulbSettingsWidget::OnParamsChanged);
+  }
+
+  void SyncFromSettings(const render::MandelbulbParams& params) {
+    power_->setValue(params.power);
+    boilout_->setValue(params.boilout);
+  }
+
+ private slots:
+  void OnParamsChanged() {
+    if (!settings_) return;
+    render::MandelbulbParams params;
+    params.power = power_->value();
+    params.boilout = boilout_->value();
+
+    settings_->SetMandelbulbParams(params);
+  }
+
+ private:
+  QDoubleSpinBox* power_;
+  QDoubleSpinBox* boilout_;
+
+  SettingsManager* settings_;
+};
+
 }  // namespace
 
 namespace ui {
@@ -77,6 +122,11 @@ void SettingsWidget::SyncWithSettings() {
   if (auto* julia_widget =
           dynamic_cast<JuliaSettingsWidget*>(fractal_stack_->currentWidget())) {
     julia_widget->SyncFromSettings(settings.fractal.julia);
+  }
+
+  if (auto* mandelbulb_widget = dynamic_cast<MandelbulbSettingsWidget*>(
+          fractal_stack_->currentWidget())) {
+    mandelbulb_widget->SyncFromSettings(settings.fractal.mandelbulb);
   }
 
   iterations_spin_->setValue(settings.fractal.max_iterations);
@@ -99,6 +149,8 @@ void SettingsWidget::BuildUI() {
   fractal_combo_->addItem(
       "Menger Sponge",
       static_cast<uint8_t>(render::FractalType::kMengerSponge));
+  fractal_combo_->addItem(
+      "Mandelbulb", static_cast<uint8_t>(render::FractalType::kMandelbulb));
 
   connect(fractal_combo_, QOverload<int>::of(&QComboBox::currentIndexChanged),
           this, &SettingsWidget::OnFractalTypeChanged);
@@ -110,7 +162,7 @@ void SettingsWidget::BuildUI() {
   connect(iterations_spin_, &QSpinBox::valueChanged, this,
           &SettingsWidget::OnIterationsChanged);
 
-  top_form->addRow("Power", iterations_spin_);
+  top_form->addRow("Iterations", iterations_spin_);
 
   layout->addLayout(top_form);
 
@@ -120,12 +172,15 @@ void SettingsWidget::BuildUI() {
 
   fractal_stack_ = new QStackedWidget(this);
   layout->addWidget(fractal_stack_);
-
+  // Mandelbrot
   fractal_stack_->addWidget(new QWidget(this));
-
+  // Julia
   fractal_stack_->addWidget(new JuliaSettingsWidget(this, settings_manager_));
-
+  // Menger Sponge
   fractal_stack_->addWidget(new QWidget(this));
+  // Mandelbulb
+  fractal_stack_->addWidget(
+      new MandelbulbSettingsWidget(this, settings_manager_));
 
   layout->addStretch();
 
