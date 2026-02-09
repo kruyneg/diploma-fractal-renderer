@@ -14,13 +14,13 @@ enum class FractalType : uint8_t {
 };
 
 struct JuliaParams {
-  double c_re = -0.8;
-  double c_im = 0.156;
+  float c_re = -0.8;
+  float c_im = 0.156;
 };
 
 struct MandelbulbParams {
-  double power = 8.0;
-  double boilout = 2.0;
+  float power = 8.0;
+  float boilout = 2.0f;
 };
 
 struct FractalSettings {
@@ -32,10 +32,10 @@ struct FractalSettings {
 };
 
 struct CameraSettings {
-  Vector3d position = {0.0, -2.0, 0.0};
-  Vector3d direction = {0.0, 1.0, 0.0};
-  double scale = 1.0;
-  double aspect = 1.0;
+  Vector3d position = {0.0f, -2.0f, 0.0f};
+  Vector3d direction = {0.0f, 1.0f, 0.0f};
+  float scale = 1.0f;
+  float aspect = 1.0f;
 };
 
 struct RenderSettings {

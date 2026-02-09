@@ -6,9 +6,9 @@
 
 namespace {
 
-constexpr double kMoveSpeed = 1.0;
-constexpr double kZoomSpeed = 1.2;
-constexpr double kMouseSensitivity = 0.002;
+constexpr float kMoveSpeed = 1.0f;
+constexpr float kZoomSpeed = 1.2;
+constexpr float kMouseSensitivity = 0.002;
 
 }  // namespace
 
@@ -31,10 +31,10 @@ void InputController::HandleKeyRelease(QKeyEvent* event) {
 }
 
 void InputController::MouseMove(int dx, int dy) {
-  const double yaw = -dx * kMouseSensitivity;
-  const double pitch = -dy * kMouseSensitivity;
+  const float yaw = -dx * kMouseSensitivity;
+  const float pitch = -dy * kMouseSensitivity;
 
-  if (yaw != 0.0 || pitch != 0.0) {
+  if (yaw != 0.0f || pitch != 0.0f) {
     settings_manager_->RotateCamera(yaw, pitch);
   }
 }
@@ -44,9 +44,9 @@ void InputController::Update(double dt) {
     return;
   }
 
-  double dx = 0.0;
-  double dy = 0.0;
-  double dz = 0.0;
+  float dx = 0.0f;
+  float dy = 0.0f;
+  float dz = 0.0f;
 
   if (pressed_keys_.contains(Qt::Key_A)) {
     dx -= kMoveSpeed * dt;
@@ -67,11 +67,11 @@ void InputController::Update(double dt) {
     dz += kMoveSpeed * dt;
   }
 
-  if (dx != 0.0 || dy != 0.0 || dz != 0.0) {
+  if (dx != 0.0f || dy != 0.0f || dz != 0.0f) {
     settings_manager_->Move(dx, dy, dz);
   }
 
-  double zoom = 0.0;
+  float zoom = 0.0f;
 
   if (pressed_keys_.contains(Qt::Key_Plus) ||
       pressed_keys_.contains(Qt::Key_Equal)) {
@@ -82,7 +82,7 @@ void InputController::Update(double dt) {
     zoom -= kZoomSpeed * dt;
   }
 
-  if (zoom != 0.0) {
+  if (zoom != 0.0f) {
     settings_manager_->Zoom(std::exp(zoom));
   }
 

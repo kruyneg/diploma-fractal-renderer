@@ -10,9 +10,9 @@ class SettingsManager : public render::SettingsProvider {
   SettingsManager();
 
   void AddObserver(std::function<void()> listener);
-  void Zoom(double factor);
-  void Move(double x, double y, double z);
-  void RotateCamera(double yaw, double pitch);
+  void Zoom(float factor);
+  void Move(float x, float y, float z);
+  void RotateCamera(float yaw, float pitch);
   void Resize(uint32_t w, uint32_t h);
   void SetFractalType(uint8_t type);
   void SetMaxIterations(uint32_t iterations);

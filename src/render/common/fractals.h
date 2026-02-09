@@ -17,28 +17,27 @@ MAYBE_DEVICE inline bool Is2DFractal(FractalType type) {
   }
 }
 
-MAYBE_DEVICE inline int MandelbrotIterations(double x, double y, int max_iter) {
-  double zr = 0.0;
-  double zi = 0.0;
+MAYBE_DEVICE inline int MandelbrotIterations(float x, float y, int max_iter) {
+  float zr = 0.0f;
+  float zi = 0.0f;
   int i = 0;
 
   while (zr * zr + zi * zi <= 4.0 && i < max_iter) {
-    double tmp = zr * zr - zi * zi + x;
-    zi = 2.0 * zr * zi + y;
+    float tmp = zr * zr - zi * zi + x;
+    zi = 2.0f * zr * zi + y;
     zr = tmp;
     ++i;
   }
   return i;
 }
 
-MAYBE_DEVICE inline int JuliaIterations(double x, double y, int max_iter,
-                                        double c_re = -0.8,
-                                        double c_im = 0.156) {
+MAYBE_DEVICE inline int JuliaIterations(float x, float y, int max_iter,
+                                        float c_re = -0.8, float c_im = 0.156) {
   int i = 0;
 
   while (x * x + y * y <= 4.0 && i < max_iter) {
-    const double x_new = x * x - y * y + c_re;
-    y = 2.0 * x * y + c_im;
+    const float x_new = x * x - y * y + c_re;
+    y = 2.0f * x * y + c_im;
     x = x_new;
 
     ++i;
@@ -55,35 +54,35 @@ MAYBE_DEVICE inline Color ColorFromIter(
 
   float t = static_cast<float>(iter) / static_cast<float>(max_iter);
 
-  uint8_t r = static_cast<uint8_t>(t * target.r + (1.0 - t) * background.r);
-  uint8_t g = static_cast<uint8_t>(t * target.g + (1.0 - t) * background.g);
-  uint8_t b = static_cast<uint8_t>(t * target.b + (1.0 - t) * background.b);
+  uint8_t r = static_cast<uint8_t>(t * target.r + (1.0f - t) * background.r);
+  uint8_t g = static_cast<uint8_t>(t * target.g + (1.0f - t) * background.g);
+  uint8_t b = static_cast<uint8_t>(t * target.b + (1.0f - t) * background.b);
 
   return Color{r, g, b, 255};
 }
 
-MAYBE_DEVICE inline double BoxSDF(const Vector3d& p, const Vector3d& b) {
+MAYBE_DEVICE inline float BoxSDF(const Vector3d& p, const Vector3d& b) {
   auto q = Abs(p) - b;
-  return Length({fmax(q.x, 0.0), fmax(q.y, 0.0), fmax(q.z, 0.0)}) +
-         fmin(fmax(q.x, fmax(q.y, q.z)), 0.0);
+  return Length({fmax(q.x, 0.0f), fmax(q.y, 0.0f), fmax(q.z, 0.0f)}) +
+         fmin(fmax(q.x, fmax(q.y, q.z)), 0.0f);
 }
 
-MAYBE_DEVICE inline double MengerSpongeSDF(Vector3d pos, int iterations) {
-  double d = BoxSDF(pos, {1.0, 1.0, 1.0});
+MAYBE_DEVICE inline float MengerSpongeSDF(Vector3d pos, int iterations) {
+  float d = BoxSDF(pos, {1.0f, 1.0f, 1.0f});
   pos = Abs(pos);
 
-  double scale = 1.0;
+  float scale = 1.0f;
   for (int m = 0; m < iterations; m++) {
-    Vector3d a = {fmod(pos.x * scale, 2.0) - 1.0,
-                  fmod(pos.y * scale, 2.0) - 1.0,
-                  fmod(pos.z * scale, 2.0) - 1.0};
+    Vector3d a = {fmod(pos.x * scale, 2.0f) - 1.0f,
+                  fmod(pos.y * scale, 2.0f) - 1.0f,
+                  fmod(pos.z * scale, 2.0f) - 1.0f};
     scale *= 3.0;
-    Vector3d r = Abs(Vector3d{1.0, 1.0, 1.0} - Abs(a) * 3.0);
+    Vector3d r = Abs(Vector3d{1.0f, 1.0f, 1.0f} - Abs(a) * 3.0);
 
-    double da = fmax(r.x, r.y);
-    double db = fmax(r.y, r.z);
-    double dc = fmax(r.z, r.x);
-    double c = (fmin(da, fmin(db, dc)) - 1.0) / scale;
+    float da = fmax(r.x, r.y);
+    float db = fmax(r.y, r.z);
+    float dc = fmax(r.z, r.x);
+    float c = (fmin(da, fmin(db, dc)) - 1.0f) / scale;
 
     d = fmax(d, c);
   }
@@ -91,12 +90,12 @@ MAYBE_DEVICE inline double MengerSpongeSDF(Vector3d pos, int iterations) {
   return d;
 }
 
-MAYBE_DEVICE inline double MandelbulbSDF(const Vector3d& pos, int iterations,
-                                         double power = 8.0,
-                                         double bailout = 2.0) {
+MAYBE_DEVICE inline float MandelbulbSDF(const Vector3d& pos, int iterations,
+                                        float power = 8.0,
+                                        float bailout = 2.0f) {
   Vector3d z = pos;
-  double dr = 1.0;
-  double r;
+  float dr = 1.0f;
+  float r;
 
   for (int i = 0; i < iterations; ++i) {
     r = Length(z);
@@ -104,11 +103,11 @@ MAYBE_DEVICE inline double MandelbulbSDF(const Vector3d& pos, int iterations,
       break;
     }
 
-    double theta = acos(z.z / r);
-    double phi = atan2(z.y, z.x);
+    float theta = acos(z.z / r);
+    float phi = atan2(z.y, z.x);
 
-    double zr = pow(r, power - 1.0);
-    dr = zr * power * dr + 1.0;
+    float zr = pow(r, power - 1.0f);
+    dr = zr * power * dr + 1.0f;
     zr *= r;
     theta *= power;
     phi *= power;

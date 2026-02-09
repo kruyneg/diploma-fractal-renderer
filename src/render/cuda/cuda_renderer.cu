@@ -6,6 +6,7 @@
 #include "render/common/utils.h"
 #include "render/cuda/utils.h"
 
+
 #ifdef _WIN32
 #include <Windows.h>
 #endif
@@ -13,6 +14,10 @@
 #include <cuda_gl_interop.h>
 
 namespace {
+
+constexpr int kMaxSteps = 100;
+constexpr float kEpsilon = 0.001f;
+constexpr float kMaxDistance = 10.0f;
 
 __global__ void Render2DKernel(cudaSurfaceObject_t surf, int w, int h,
                                render::RenderSettings settings) {
@@ -42,42 +47,43 @@ __global__ void Render2DKernel(cudaSurfaceObject_t surf, int w, int h,
 
 __global__ void RayMarchingKernel(cudaSurfaceObject_t surf, int w, int h,
                                   render::RenderSettings settings) {
-  int x = blockIdx.x * blockDim.x + threadIdx.x;
-  int y = blockIdx.y * blockDim.y + threadIdx.y;
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  int idy = blockIdx.y * blockDim.y + threadIdx.y;
 
-  if (x >= w || y >= h) {
-    return;
-  }
+  int offsetx = gridDim.x * blockDim.x;
+  int offsety = gridDim.y * blockDim.y;
 
-  Ray ray = MakeRay(x, y, w, h, settings.camera);
+  for (int y = idy; y < h; y += offsety) {
+    for (int x = idx; x < w; x += offsetx) {
+      Ray ray = MakeRay(x, y, w, h, settings.camera);
+      Color color = {0, 0, 0, 255};
 
-  Color color = {0, 0, 0, 255};
+      float t = 0.0f;
 
-  double t = 0.0;
-  const int max_steps = 100;
-  const double min_dist = 0.001;
-  const float max_dist = 13.0;
-  for (int i = 0; i < max_steps; ++i) {
-    const auto pos = ray.position + ray.direction * t;
-    const auto distance = render::CalculateSignedDistance(pos, settings);
-    if (distance < min_dist) {
-      auto norm = render::GetNormal(pos, settings);
-      norm = norm * 0.5 + Vector3d{0.5, 0.5, 0.5};
-      norm = norm * 255;
-      color.r = norm.x;
-      color.g = norm.y;
-      color.b = norm.z;
+      for (int i = 0; i < kMaxSteps; ++i) {
+        const auto pos = ray.position + ray.direction * t;
+        const auto distance = render::CalculateSignedDistance(pos, settings);
 
-      break;
+        if (distance < kEpsilon) {
+          auto norm = render::GetNormal(pos, settings);
+          norm = norm * 0.5 + Vector3d{0.5, 0.5, 0.5};
+          norm = norm * 255;
+          color.r = (uint8_t)norm.x;
+          color.g = (uint8_t)norm.y;
+          color.b = (uint8_t)norm.z;
+          break;
+        }
+
+        if (distance > kMaxDistance) {
+          break;
+        }
+        t += distance;
+      }
+
+      uchar4 c = {color.r, color.g, color.b, color.a};
+      surf2Dwrite(c, surf, x * sizeof(uchar4), y, cudaBoundaryModeTrap);
     }
-    if (distance > max_dist) {
-      break;
-    }
-    t += distance;
   }
-
-  uchar4 c = {color.r, color.g, color.b, color.a};
-  surf2Dwrite(c, surf, x * sizeof(Color), y, cudaBoundaryModeTrap);
 }
 
 }  // namespace
@@ -90,7 +96,7 @@ CUDARenderer::~CUDARenderer() = default;
 
 void CUDARenderer::Init(uint32_t target_tex_id) {
   if (initialized_) {
-    throw std::runtime_error("CUDARenderer: double init");
+    throw std::runtime_error("CUDARenderer: float init");
   }
 
 #ifdef _WIN32
@@ -137,8 +143,8 @@ void CUDARenderer::Render() {
     Render2DKernel<<<grid, block>>>(surf, width_, height_,
                                     settings_provider_->GetSettings());
   } else {
-    RayMarchingKernel<<<grid, block>>>(surf, width_, height_,
-                                       settings_provider_->GetSettings());
+    RayMarchingKernel<<<grid, dim3(16, 16)>>>(
+        surf, width_, height_, settings_provider_->GetSettings());
   }
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());

@@ -68,9 +68,9 @@ class MandelbulbSettingsWidget final : public QWidget {
 
     power_ = new QDoubleSpinBox(this);
     power_->setRange(1.0, 15.0);
-    power_->setSingleStep(1.0);
+    power_->setSingleStep(0.1);
     boilout_ = new QDoubleSpinBox(this);
-    boilout_->setRange(0, 5.0);
+    boilout_->setRange(0, 10.0);
     boilout_->setSingleStep(1.0);
 
     layout->addRow("Power", power_);

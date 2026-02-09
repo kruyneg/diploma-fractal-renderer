@@ -4,14 +4,14 @@
 
 namespace {
 
-constexpr Vector3d kWorldUp{0.0, 0.0, 1.0};
+constexpr Vector3d kWorldUp{0.0f, 0.0f, 1.0f};
 
 Vector3d RotateAroundAxis(const Vector3d& v, const Vector3d& axis,
-                          double angle) {
-  const double c = std::cos(angle);
-  const double s = std::sin(angle);
+                          float angle) {
+  const float c = std::cos(angle);
+  const float s = std::sin(angle);
 
-  return v * c + Cross(axis, v) * s + axis * Dot(axis, v) * (1.0 - c);
+  return v * c + Cross(axis, v) * s + axis * Dot(axis, v) * (1.0f - c);
 }
 
 }  // namespace
@@ -22,8 +22,8 @@ void SettingsManager::AddObserver(std::function<void()> observer) {
   observers_.push_back(observer);
 }
 
-void SettingsManager::Zoom(double factor) {
-  if (factor <= 0.0) {
+void SettingsManager::Zoom(float factor) {
+  if (factor <= 0.0f) {
     return;
   }
 
@@ -32,10 +32,10 @@ void SettingsManager::Zoom(double factor) {
   need_commit_ = true;
 }
 
-void SettingsManager::Move(double x, double y, double z) {
-  const double dx = x * pending_.camera.scale;
-  const double dy = y * pending_.camera.scale;
-  const double dz = z * pending_.camera.scale;
+void SettingsManager::Move(float x, float y, float z) {
+  const float dx = x * pending_.camera.scale;
+  const float dy = y * pending_.camera.scale;
+  const float dz = z * pending_.camera.scale;
 
   pending_.camera.position.z += dz;
 
@@ -46,7 +46,7 @@ void SettingsManager::Move(double x, double y, double z) {
   need_commit_ = true;
 }
 
-void SettingsManager::RotateCamera(double yaw, double pitch) {
+void SettingsManager::RotateCamera(float yaw, float pitch) {
   if (render::Is2DFractal(pending_.fractal.type)) {
     return;
   }
@@ -60,8 +60,8 @@ void SettingsManager::RotateCamera(double yaw, double pitch) {
 
   if (std::abs(dir.z) > 0.9999) {
     dir.z = std::copysign(0.9999, dir.z);
-    const double xy = std::sqrt(1.0 - dir.z * dir.z);
-    const double len_xy = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+    const float xy = std::sqrt(1.0f - dir.z * dir.z);
+    const float len_xy = std::sqrt(dir.x * dir.x + dir.y * dir.y);
 
     if (len_xy > 1e-8) {
       dir.x *= xy / len_xy;
@@ -76,7 +76,7 @@ void SettingsManager::RotateCamera(double yaw, double pitch) {
 void SettingsManager::Resize(uint32_t w, uint32_t h) {
   if (w == 0 || h == 0) return;
 
-  pending_.camera.aspect = static_cast<double>(w) / h;
+  pending_.camera.aspect = static_cast<float>(w) / h;
 
   need_commit_ = true;
 }
