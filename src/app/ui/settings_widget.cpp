@@ -71,7 +71,7 @@ class MandelbulbSettingsWidget final : public QWidget {
     power_->setSingleStep(0.1);
     boilout_ = new QDoubleSpinBox(this);
     boilout_->setRange(0, 10.0);
-    boilout_->setSingleStep(1.0);
+    boilout_->setSingleStep(0.1);
 
     layout->addRow("Power", power_);
     layout->addRow("Boilout", boilout_);
@@ -104,6 +104,60 @@ class MandelbulbSettingsWidget final : public QWidget {
   SettingsManager* settings_;
 };
 
+class MandelboxSettingsWidget final : public QWidget {
+  Q_OBJECT
+ public:
+  explicit MandelboxSettingsWidget(QWidget* parent, SettingsManager* settings)
+      : QWidget(parent), settings_(settings) {
+    auto* layout = new QFormLayout(this);
+
+    min_radius_ = new QDoubleSpinBox(this);
+    min_radius_->setRange(0.0, 2.0);
+    min_radius_->setSingleStep(0.01);
+    fixed_radius_ = new QDoubleSpinBox(this);
+    fixed_radius_->setRange(0, 10.0);
+    fixed_radius_->setSingleStep(1.0);
+    scale_ = new QDoubleSpinBox(this);
+    scale_->setRange(-5.0, 5.0);
+    scale_->setSingleStep(0.1);
+
+    layout->addRow("Min radius", min_radius_);
+    layout->addRow("Fixed radius", fixed_radius_);
+    layout->addRow("Scale", scale_);
+
+    connect(min_radius_, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            this, &MandelboxSettingsWidget::OnParamsChanged);
+    connect(fixed_radius_, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            this, &MandelboxSettingsWidget::OnParamsChanged);
+    connect(scale_, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+            &MandelboxSettingsWidget::OnParamsChanged);
+  }
+
+  void SyncFromSettings(const render::MandelboxParams& params) {
+    min_radius_->setValue(params.min_radius);
+    fixed_radius_->setValue(params.fixed_radius);
+    scale_->setValue(params.scale);
+  }
+
+ private slots:
+  void OnParamsChanged() {
+    if (!settings_) return;
+    render::MandelboxParams params;
+    params.min_radius = min_radius_->value();
+    params.fixed_radius = fixed_radius_->value();
+    params.scale = scale_->value();
+
+    settings_->SetMandelboxParams(params);
+  }
+
+ private:
+  QDoubleSpinBox* min_radius_;
+  QDoubleSpinBox* fixed_radius_;
+  QDoubleSpinBox* scale_;
+
+  SettingsManager* settings_;
+};
+
 }  // namespace
 
 namespace ui {
@@ -123,10 +177,13 @@ void SettingsWidget::SyncWithSettings() {
           dynamic_cast<JuliaSettingsWidget*>(fractal_stack_->currentWidget())) {
     julia_widget->SyncFromSettings(settings.fractal.julia);
   }
-
   if (auto* mandelbulb_widget = dynamic_cast<MandelbulbSettingsWidget*>(
           fractal_stack_->currentWidget())) {
     mandelbulb_widget->SyncFromSettings(settings.fractal.mandelbulb);
+  }
+  if (auto* mandelbox_widget = dynamic_cast<MandelboxSettingsWidget*>(
+          fractal_stack_->currentWidget())) {
+    mandelbox_widget->SyncFromSettings(settings.fractal.mandelbox);
   }
 
   iterations_spin_->setValue(settings.fractal.max_iterations);
@@ -151,6 +208,8 @@ void SettingsWidget::BuildUI() {
       static_cast<uint8_t>(render::FractalType::kMengerSponge));
   fractal_combo_->addItem(
       "Mandelbulb", static_cast<uint8_t>(render::FractalType::kMandelbulb));
+  fractal_combo_->addItem(
+      "Mandelbox", static_cast<uint8_t>(render::FractalType::kMandelbox));
 
   connect(fractal_combo_, QOverload<int>::of(&QComboBox::currentIndexChanged),
           this, &SettingsWidget::OnFractalTypeChanged);
@@ -181,6 +240,9 @@ void SettingsWidget::BuildUI() {
   // Mandelbulb
   fractal_stack_->addWidget(
       new MandelbulbSettingsWidget(this, settings_manager_));
+  // Mandelbox
+  fractal_stack_->addWidget(
+      new MandelboxSettingsWidget(this, settings_manager_));
 
   layout->addStretch();
 

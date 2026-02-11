@@ -43,14 +43,19 @@ MAYBE_DEVICE inline float CalculateSignedDistance(
       return MandelbulbSDF(position, settings.fractal.max_iterations,
                            settings.fractal.mandelbulb.power,
                            settings.fractal.mandelbulb.boilout);
+    case FractalType::kMandelbox:
+      return MandelboxSDF(position, settings.fractal.max_iterations,
+                          settings.fractal.mandelbox.min_radius,
+                          settings.fractal.mandelbox.fixed_radius,
+                          settings.fractal.mandelbox.scale);
     default:
       return 100.0;
   }
 }
 
 MAYBE_DEVICE inline Vector3d GetNormal(const Vector3d& position,
-                                       const RenderSettings& settings) {
-  constexpr float eps = 1e-3;
+                                       const RenderSettings& settings,
+                                       float eps = 1e-3) {
   float dx =
       CalculateSignedDistance(position + Vector3d{eps, 0.0f, 0.0f}, settings) -
       CalculateSignedDistance(position - Vector3d{eps, 0.0f, 0.0f}, settings);

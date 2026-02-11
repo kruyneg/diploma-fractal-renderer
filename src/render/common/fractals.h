@@ -121,4 +121,42 @@ MAYBE_DEVICE inline float MandelbulbSDF(const Vector3d& pos, int iterations,
   return 0.5 * log(r) * r / dr;
 }
 
+MAYBE_DEVICE inline float MandelboxSDF(const Vector3d& pos, int iterations,
+                                       float min_radius, float fixed_radius,
+                                       float scale) {
+  Vector3d z = pos;
+  float dr = 1.0f;
+
+  const float min_r2 = min_radius * min_radius;
+  const float fixed_r2 = fixed_radius * fixed_radius;
+
+  for (int i = 0; i < iterations; ++i) {
+    auto clamped = z;
+    clamped.x = fmin(fmax(clamped.x, -1.0f), 1.0f);
+    clamped.y = fmin(fmax(clamped.y, -1.0f), 1.0f);
+    clamped.z = fmin(fmax(clamped.z, -1.0f), 1.0f);
+    z = clamped * 2.0f - z;
+
+    const float r2 = Dot(z, z);
+    if (r2 < min_r2) {
+      const float factor = fixed_r2 / min_r2;
+      z = z * factor;
+      dr = dr * factor;
+    } else if (r2 < fixed_r2) {
+      const float factor = fixed_r2 / r2;
+      z = z * factor;
+      dr = dr * factor;
+    }
+
+    z = z * scale + pos;
+    dr = dr * fabs(scale) + 1.0f;
+
+    if (Length(z) > 100.0f) {
+      break;
+    }
+  }
+
+  return Length(z) / dr;
+}
+
 }  // namespace render

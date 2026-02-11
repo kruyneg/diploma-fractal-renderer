@@ -104,6 +104,11 @@ void SettingsManager::SetMandelbulbParams(render::MandelbulbParams params) {
   need_commit_ = true;
 }
 
+void SettingsManager::SetMandelboxParams(render::MandelboxParams params) {
+  pending_.fractal.mandelbox = params;
+  need_commit_ = true;
+}
+
 void SettingsManager::Commit() {
   if (!need_commit_) {
     return;

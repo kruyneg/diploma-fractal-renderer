@@ -18,6 +18,7 @@ class SettingsManager : public render::SettingsProvider {
   void SetMaxIterations(uint32_t iterations);
   void SetJuliaParams(render::JuliaParams params);
   void SetMandelbulbParams(render::MandelbulbParams params);
+  void SetMandelboxParams(render::MandelboxParams params);
 
   void Commit();
 

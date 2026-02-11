@@ -15,7 +15,7 @@
 
 namespace {
 
-constexpr int kMaxSteps = 100;
+constexpr int kMaxSteps = 1000;
 constexpr float kEpsilon = 0.001f;
 constexpr float kMaxDistance = 10.0f;
 
@@ -64,8 +64,8 @@ __global__ void RayMarchingKernel(cudaSurfaceObject_t surf, int w, int h,
         const auto pos = ray.position + ray.direction * t;
         const auto distance = render::CalculateSignedDistance(pos, settings);
 
-        if (distance < kEpsilon) {
-          auto norm = render::GetNormal(pos, settings);
+        if (distance < kEpsilon * t) {
+          auto norm = render::GetNormal(pos, settings, kEpsilon);
           norm = norm * 0.5 + Vector3d{0.5, 0.5, 0.5};
           norm = norm * 255;
           color.r = (uint8_t)norm.x;
@@ -75,6 +75,7 @@ __global__ void RayMarchingKernel(cudaSurfaceObject_t surf, int w, int h,
         }
 
         if (distance > kMaxDistance) {
+          color = {100, 100, 100, 255};
           break;
         }
         t += distance;
