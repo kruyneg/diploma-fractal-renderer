@@ -45,7 +45,7 @@ FractalWindow::FractalWindow(FractalApp* app) : app_(app) {
 
   setCentralWidget(renderer_widget_);
   addDockWidget(Qt::RightDockWidgetArea, settings_dock_);
-  resize(640, 480);
+  resize(1280, 720);
 }
 
 FractalApp* FractalWindow::app() { return app_; }

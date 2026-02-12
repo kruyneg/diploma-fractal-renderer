@@ -96,6 +96,8 @@ void InputController::Update(double dt) {
     settings_manager_->SetFractalType(3);
   } else if (pressed_keys_.contains(Qt::Key_5)) {
     settings_manager_->SetFractalType(4);
+  } else if (pressed_keys_.contains(Qt::Key_6)) {
+    settings_manager_->SetFractalType(5);
   }
 }
 

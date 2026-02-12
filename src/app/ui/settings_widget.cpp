@@ -158,6 +158,69 @@ class MandelboxSettingsWidget final : public QWidget {
   SettingsManager* settings_;
 };
 
+class JuliabulbSettingsWidget final : public QWidget {
+  Q_OBJECT
+ public:
+  explicit JuliabulbSettingsWidget(QWidget* parent, SettingsManager* settings)
+      : QWidget(parent), settings_(settings) {
+    auto* layout = new QFormLayout(this);
+
+    power_ = new QDoubleSpinBox(this);
+    power_->setRange(1.0, 15.0);
+    power_->setSingleStep(0.1);
+    c_x_ = new QDoubleSpinBox(this);
+    c_x_->setRange(-1.0, 1.0);
+    c_x_->setSingleStep(0.1);
+    c_y_ = new QDoubleSpinBox(this);
+    c_y_->setRange(-1.0, 1.0);
+    c_y_->setSingleStep(0.1);
+    c_z_ = new QDoubleSpinBox(this);
+    c_z_->setRange(-1.0, 1.0);
+    c_z_->setSingleStep(0.1);
+
+    layout->addRow("Power", power_);
+    layout->addRow("C.x", c_x_);
+    layout->addRow("C.y", c_y_);
+    layout->addRow("C.z", c_z_);
+
+    connect(power_, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+            &JuliabulbSettingsWidget::OnParamsChanged);
+    connect(c_x_, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+            &JuliabulbSettingsWidget::OnParamsChanged);
+    connect(c_y_, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+            &JuliabulbSettingsWidget::OnParamsChanged);
+    connect(c_z_, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+            &JuliabulbSettingsWidget::OnParamsChanged);
+  }
+
+  void SyncFromSettings(const render::JuliabulbParams& params) {
+    power_->setValue(params.power);
+    c_x_->setValue(params.c.x);
+    c_y_->setValue(params.c.y);
+    c_z_->setValue(params.c.z);
+  }
+
+ private slots:
+  void OnParamsChanged() {
+    if (!settings_) return;
+    render::JuliabulbParams params;
+    params.power = power_->value();
+    params.c.x = c_x_->value();
+    params.c.y = c_y_->value();
+    params.c.z = c_z_->value();
+
+    settings_->SetJuliabulbParams(params);
+  }
+
+ private:
+  QDoubleSpinBox* power_;
+  QDoubleSpinBox* c_x_;
+  QDoubleSpinBox* c_y_;
+  QDoubleSpinBox* c_z_;
+
+  SettingsManager* settings_;
+};
+
 }  // namespace
 
 namespace ui {
@@ -185,6 +248,10 @@ void SettingsWidget::SyncWithSettings() {
           fractal_stack_->currentWidget())) {
     mandelbox_widget->SyncFromSettings(settings.fractal.mandelbox);
   }
+  if (auto* juliabulb_widget = dynamic_cast<JuliabulbSettingsWidget*>(
+          fractal_stack_->currentWidget())) {
+    juliabulb_widget->SyncFromSettings(settings.fractal.juliabulb);
+  }
 
   iterations_spin_->setValue(settings.fractal.max_iterations);
 }
@@ -210,6 +277,8 @@ void SettingsWidget::BuildUI() {
       "Mandelbulb", static_cast<uint8_t>(render::FractalType::kMandelbulb));
   fractal_combo_->addItem(
       "Mandelbox", static_cast<uint8_t>(render::FractalType::kMandelbox));
+  fractal_combo_->addItem(
+      "Juliabulb", static_cast<uint8_t>(render::FractalType::kJuliabulb));
 
   connect(fractal_combo_, QOverload<int>::of(&QComboBox::currentIndexChanged),
           this, &SettingsWidget::OnFractalTypeChanged);
@@ -243,6 +312,9 @@ void SettingsWidget::BuildUI() {
   // Mandelbox
   fractal_stack_->addWidget(
       new MandelboxSettingsWidget(this, settings_manager_));
+  // Juliabulb
+  fractal_stack_->addWidget(
+      new JuliabulbSettingsWidget(this, settings_manager_));
 
   layout->addStretch();
 

@@ -19,6 +19,7 @@ class SettingsManager : public render::SettingsProvider {
   void SetJuliaParams(render::JuliaParams params);
   void SetMandelbulbParams(render::MandelbulbParams params);
   void SetMandelboxParams(render::MandelboxParams params);
+  void SetJuliabulbParams(render::JuliabulbParams params);
 
   void Commit();
 

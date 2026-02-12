@@ -12,6 +12,7 @@ enum class FractalType : uint8_t {
   kMengerSponge,
   kMandelbulb,
   kMandelbox,
+  kJuliabulb,
 };
 
 struct JuliaParams {
@@ -30,6 +31,11 @@ struct MandelboxParams {
   float scale = 2.0;
 };
 
+struct JuliabulbParams {
+  Vector3d c = {0.1, 1.0, 0.0};
+  float power = 8.0;
+};
+
 struct FractalSettings {
   FractalType type = FractalType::kMandelbrot;
   uint32_t max_iterations = 5;
@@ -37,6 +43,7 @@ struct FractalSettings {
   JuliaParams julia;
   MandelbulbParams mandelbulb;
   MandelboxParams mandelbox;
+  JuliabulbParams juliabulb;
 };
 
 struct CameraSettings {

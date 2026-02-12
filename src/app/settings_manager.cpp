@@ -109,6 +109,11 @@ void SettingsManager::SetMandelboxParams(render::MandelboxParams params) {
   need_commit_ = true;
 }
 
+void SettingsManager::SetJuliabulbParams(render::JuliabulbParams params) {
+  pending_.fractal.juliabulb = params;
+  need_commit_ = true;
+}
+
 void SettingsManager::Commit() {
   if (!need_commit_) {
     return;

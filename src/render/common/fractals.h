@@ -159,4 +159,39 @@ MAYBE_DEVICE inline float MandelboxSDF(const Vector3d& pos, int iterations,
   return Length(z) / dr;
 }
 
+MAYBE_DEVICE inline float JuliabulbSDF(const Vector3d& p, int max_iter,
+                                       const Vector3d& c = {0.1, 1.0, 0.0},
+                                       float power = 5.5) {
+  const float bailout = 2.0f;
+
+  Vector3d z = p;
+  float dr = 1.0f;
+  float r = 0.0f;
+  for (int i = 0; i < max_iter; ++i) {
+    r = Length(z);
+    if (r > bailout) break;
+
+    float r_pow = powf(r, power - 1.0f);
+    dr = r_pow * power * dr + 1.0f;
+
+    float theta = acosf(fmin(fmax(z.z / r, -1.0f), 1.0f));
+    float phi = atan2f(z.y, z.x);
+
+    theta *= power;
+    phi *= power;
+
+    const float sin_theta = sinf(theta);
+    const float cos_theta = cosf(theta);
+    const float cos_phi = cosf(phi);
+    const float sin_phi = sinf(phi);
+    r_pow *= r;
+    z = Vector3d{r_pow * sin_theta * cos_phi, r_pow * cos_theta,
+                 r_pow * sin_theta * sin_phi};
+
+    z = z + c;
+  }
+
+  return 0.5f * logf(r) * r / dr;
+}
+
 }  // namespace render

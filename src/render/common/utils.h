@@ -48,6 +48,10 @@ MAYBE_DEVICE inline float CalculateSignedDistance(
                           settings.fractal.mandelbox.min_radius,
                           settings.fractal.mandelbox.fixed_radius,
                           settings.fractal.mandelbox.scale);
+    case FractalType::kJuliabulb:
+      return JuliabulbSDF(position, settings.fractal.max_iterations,
+                          settings.fractal.juliabulb.c,
+                          settings.fractal.juliabulb.power);
     default:
       return 100.0;
   }
