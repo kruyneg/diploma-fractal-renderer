@@ -1,6 +1,7 @@
 #include "render/cpu/cpu_renderer.h"
 
 #include "QOpenGLFunctions"
+#include "render/common/coloring.h"
 #include "render/common/fractals.h"
 #include "render/common/utils.h"
 

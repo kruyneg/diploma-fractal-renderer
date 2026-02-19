@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 
+#include "render/common/coloring.h"
 #include "render/common/fractals.h"
 #include "render/common/utils.h"
 #include "render/cuda/utils.h"
@@ -65,12 +66,9 @@ __global__ void RayMarchingKernel(cudaSurfaceObject_t surf, int w, int h,
         const auto distance = render::CalculateSignedDistance(pos, settings);
 
         if (distance < kEpsilon * t) {
-          auto norm = render::GetNormal(pos, settings, kEpsilon);
-          norm = norm * 0.5 + Vector3d{0.5, 0.5, 0.5};
-          norm = norm * 255;
-          color.r = (uint8_t)norm.x;
-          color.g = (uint8_t)norm.y;
-          color.b = (uint8_t)norm.z;
+          const auto n = render::GetNormal(pos, settings);
+          color = render::GetFractalColor(pos, n, settings.fractal);
+          color = render::Lighting(color, pos, n, settings);
           break;
         }
 

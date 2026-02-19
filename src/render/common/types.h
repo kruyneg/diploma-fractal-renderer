@@ -43,6 +43,10 @@ MAYBE_DEVICE inline Vector3d operator-(const Vector3d& a, const Vector3d& b) {
   return {a.x - b.x, a.y - b.y, a.z - b.z};
 }
 
+MAYBE_DEVICE inline Vector3d operator-(const Vector3d& vec) {
+  return {-vec.x, -vec.y, -vec.z};
+}
+
 MAYBE_DEVICE inline Vector3d operator*(const Vector3d& a, const Vector3d& b) {
   return {a.x * b.x, a.y * b.y, a.z * b.z};
 }

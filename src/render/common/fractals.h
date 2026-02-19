@@ -45,22 +45,6 @@ MAYBE_DEVICE inline int JuliaIterations(float x, float y, int max_iter,
   return i;
 }
 
-MAYBE_DEVICE inline Color ColorFromIter(
-    int iter, int max_iter, Color target = Color{255, 255, 255, 255},
-    Color background = Color{0, 0, 0, 255}) {
-  if (iter == max_iter) {
-    return Color{0, 0, 0, 255};
-  }
-
-  float t = static_cast<float>(iter) / static_cast<float>(max_iter);
-
-  uint8_t r = static_cast<uint8_t>(t * target.r + (1.0f - t) * background.r);
-  uint8_t g = static_cast<uint8_t>(t * target.g + (1.0f - t) * background.g);
-  uint8_t b = static_cast<uint8_t>(t * target.b + (1.0f - t) * background.b);
-
-  return Color{r, g, b, 255};
-}
-
 MAYBE_DEVICE inline float BoxSDF(const Vector3d& p, const Vector3d& b) {
   auto q = Abs(p) - b;
   return Length({fmax(q.x, 0.0f), fmax(q.y, 0.0f), fmax(q.z, 0.0f)}) +
@@ -69,13 +53,13 @@ MAYBE_DEVICE inline float BoxSDF(const Vector3d& p, const Vector3d& b) {
 
 MAYBE_DEVICE inline float MengerSpongeSDF(Vector3d pos, int iterations) {
   float d = BoxSDF(pos, {1.0f, 1.0f, 1.0f});
-  pos = Abs(pos);
+  const auto z = Abs(pos);
 
   float scale = 1.0f;
   for (int m = 0; m < iterations; m++) {
-    Vector3d a = {fmod(pos.x * scale, 2.0f) - 1.0f,
-                  fmod(pos.y * scale, 2.0f) - 1.0f,
-                  fmod(pos.z * scale, 2.0f) - 1.0f};
+    Vector3d a = {fmod(z.x * scale, 2.0f) - 1.0f,
+                  fmod(z.y * scale, 2.0f) - 1.0f,
+                  fmod(z.z * scale, 2.0f) - 1.0f};
     scale *= 3.0;
     Vector3d r = Abs(Vector3d{1.0f, 1.0f, 1.0f} - Abs(a) * 3.0);
 
