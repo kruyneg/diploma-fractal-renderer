@@ -7,7 +7,6 @@
 #include "render/common/utils.h"
 #include "render/cuda/utils.h"
 
-
 #ifdef _WIN32
 #include <Windows.h>
 #endif
@@ -56,7 +55,7 @@ __global__ void RayMarchingKernel(cudaSurfaceObject_t surf, int w, int h,
 
   for (int y = idy; y < h; y += offsety) {
     for (int x = idx; x < w; x += offsetx) {
-      Ray ray = MakeRay(x, y, w, h, settings.camera);
+      const auto ray = MakeRay(x, y, w, h, settings.camera);
       Color color = {0, 0, 0, 255};
 
       float t = 0.0f;

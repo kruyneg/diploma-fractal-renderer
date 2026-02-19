@@ -17,6 +17,8 @@ class CPURenderer : public Renderer {
   void SetSettingsProvider(SettingsProvider* settings) override;
 
  private:
+  void Render2D(const RenderSettings& settings);
+  void Render3D(const RenderSettings& settings);
   void UploadBufferToTarget() const;
 
   uint32_t width_ = 0;

@@ -24,7 +24,16 @@ void CPURenderer::Render() {
   }
 
   const auto settings = settings_->GetSettings();
+  if (Is2DFractal(settings.fractal.type)) {
+    Render2D(settings);
+  } else {
+    Render3D(settings);
+  }
 
+  UploadBufferToTarget();
+}
+
+void CPURenderer::Render2D(const RenderSettings& settings) {
   for (uint32_t y = 0; y < height_; ++y) {
     for (uint32_t x = 0; x < width_; ++x) {
       const auto pos = PixelToPosition(x, y, width_, height_, settings.camera);
@@ -43,8 +52,35 @@ void CPURenderer::Render() {
       c = ColorFromIter(iteration, settings.fractal.max_iterations);
     }
   }
+}
 
-  UploadBufferToTarget();
+void CPURenderer::Render3D(const RenderSettings& settings) {
+  for (uint32_t y = 0; y < height_; ++y) {
+    for (uint32_t x = 0; x < width_; ++x) {
+      Color& color = buffer_[y * width_ + x];
+      color = {0, 0, 0, 255};
+
+      const auto ray = MakeRay(x, y, width_, height_, settings.camera);
+      float t = 0.0f;
+
+      for (int i = 0; i < 100; ++i) {
+        const auto pos = ray.position + ray.direction * t;
+        const auto distance = CalculateSignedDistance(pos, settings);
+
+        if (distance < 0.001 * t) {
+          const auto n = GetNormal(pos, settings);
+          color = render::GetFractalColor(pos, n, settings.fractal);
+          break;
+        }
+        if (distance > 2.0f) {
+          color = {100, 100, 100, 255};
+          break;
+        }
+
+        t += distance;
+      }
+    }
+  }
 }
 
 void CPURenderer::UploadBufferToTarget() const {
