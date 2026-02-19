@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QElapsedTimer>
 #include <QOpenGLFunctions_3_3_Core>
 #include <QOpenGLShaderProgram>
 #include <QtOpenGLWidgets/QOpenGLWidget>
@@ -10,6 +11,7 @@
 namespace ui {
 
 class FractalWindow;
+class InputController;
 
 class RendererWidget : public QOpenGLWidget,
                        protected QOpenGLFunctions_3_3_Core {
@@ -18,8 +20,11 @@ class RendererWidget : public QOpenGLWidget,
   RendererWidget(FractalWindow* parent = nullptr,
                  render::Renderer* renderer = nullptr);
 
+  void UpdateSettings(double delta_seconds);
+
  signals:
   void ViewResized(uint32_t w, uint32_t h);
+  void FrameStatsUpdated(double ms, double fps);
 
  protected:
   void initializeGL() override;
@@ -27,12 +32,25 @@ class RendererWidget : public QOpenGLWidget,
   void paintGL() override;
 
   void resizeEvent(QResizeEvent* event) override;
+  void focusInEvent(QFocusEvent* event) override;
+  void focusOutEvent(QFocusEvent* event) override;
+  void keyPressEvent(QKeyEvent* event) override;
+  void keyReleaseEvent(QKeyEvent* event) override;
+  void mousePressEvent(QMouseEvent* event) override;
+  void mouseMoveEvent(QMouseEvent* event) override;
 
  private:
   void InitShader();
   void InitQuad();
-
   void DrawTexture();
+
+  QPoint GetCenter() const;
+
+  InputController* input_controller_;
+  bool mouse_locked_ = false;
+  bool ignore_next_mouse_event_ = false;
+
+  QElapsedTimer frame_timer_;
 
   render::Renderer* renderer_;
   TextureTarget texture_;

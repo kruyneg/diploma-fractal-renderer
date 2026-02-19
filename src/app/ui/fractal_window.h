@@ -10,20 +10,15 @@ namespace ui {
 
 class RendererWidget;
 class SettingsWidget;
-class InputController;
 
 class FractalWindow : public QMainWindow {
   Q_OBJECT
  public:
   explicit FractalWindow(FractalApp* app);
 
- protected:
-  void keyPressEvent(QKeyEvent* event) override;
-  void keyReleaseEvent(QKeyEvent* event) override;
+  FractalApp* app();
 
  private:
-  bool ShouldHandleInput() const;
-
   FractalApp* app_ = nullptr;
 
   QTimer update_timer_;
@@ -32,8 +27,6 @@ class FractalWindow : public QMainWindow {
   RendererWidget* renderer_widget_ = nullptr;
   QDockWidget* settings_dock_ = nullptr;
   SettingsWidget* settings_widget_ = nullptr;
-
-  InputController* input_controller_ = nullptr;
 };
 
 }  // namespace ui

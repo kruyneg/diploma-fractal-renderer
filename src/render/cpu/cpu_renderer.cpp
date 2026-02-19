@@ -1,7 +1,9 @@
 #include "render/cpu/cpu_renderer.h"
 
 #include "QOpenGLFunctions"
-#include "render/fractals.h"
+#include "render/common/coloring.h"
+#include "render/common/fractals.h"
+#include "render/common/utils.h"
 
 namespace render {
 
@@ -22,34 +24,63 @@ void CPURenderer::Render() {
   }
 
   const auto settings = settings_->GetSettings();
+  if (Is2DFractal(settings.fractal.type)) {
+    Render2D(settings);
+  } else {
+    Render3D(settings);
+  }
 
-  const double scale_x =
-      (settings.view.max_x - settings.view.min_x) / static_cast<double>(width_);
-  const double scale_y = (settings.view.max_y - settings.view.min_y) /
-                         static_cast<double>(height_);
+  UploadBufferToTarget();
+}
 
+void CPURenderer::Render2D(const RenderSettings& settings) {
   for (uint32_t y = 0; y < height_; ++y) {
-    double fy = settings.view.max_y - y * scale_y;
-
     for (uint32_t x = 0; x < width_; ++x) {
-      double fx = settings.view.min_x + x * scale_x;
+      const auto pos = PixelToPosition(x, y, width_, height_, settings.camera);
 
       int iteration;
       if (settings.fractal.type == FractalType::kMandelbrot) {
         iteration =
-            MandelbrotIterations(fx, fy, settings.fractal.max_iterations);
+            MandelbrotIterations(pos.x, pos.y, settings.fractal.max_iterations);
       } else if (settings.fractal.type == FractalType::kJulia) {
-        iteration = JuliaIterations(fx, fy, settings.fractal.max_iterations,
-                                    settings.fractal.julia.c_re,
-                                    settings.fractal.julia.c_im);
+        iteration = JuliaIterations(
+            pos.x, pos.y, settings.fractal.max_iterations,
+            settings.fractal.julia.c_re, settings.fractal.julia.c_im);
       }
       Color& c = buffer_[y * width_ + x];
 
       c = ColorFromIter(iteration, settings.fractal.max_iterations);
     }
   }
+}
 
-  UploadBufferToTarget();
+void CPURenderer::Render3D(const RenderSettings& settings) {
+  for (uint32_t y = 0; y < height_; ++y) {
+    for (uint32_t x = 0; x < width_; ++x) {
+      Color& color = buffer_[y * width_ + x];
+      color = {0, 0, 0, 255};
+
+      const auto ray = MakeRay(x, y, width_, height_, settings.camera);
+      float t = 0.0f;
+
+      for (int i = 0; i < 100; ++i) {
+        const auto pos = ray.position + ray.direction * t;
+        const auto distance = CalculateSignedDistance(pos, settings);
+
+        if (distance < 0.001 * t) {
+          const auto n = GetNormal(pos, settings);
+          color = render::GetFractalColor(pos, n, settings.fractal);
+          break;
+        }
+        if (distance > 2.0f) {
+          color = {100, 100, 100, 255};
+          break;
+        }
+
+        t += distance;
+      }
+    }
+  }
 }
 
 void CPURenderer::UploadBufferToTarget() const {

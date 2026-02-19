@@ -1,15 +1,25 @@
 #include "app/ui/renderer_widget.h"
 
+#include <QCursor>
 #include <QResizeEvent>
 
+#include "app/fractal_app.h"
 #include "app/ui/fractal_window.h"
+#include "app/ui/input_controller.h"
 
 namespace ui {
 
 RendererWidget::RendererWidget(FractalWindow* parent /* = nullptr */,
                                render::Renderer* renderer /* = nullptr */)
     : QOpenGLWidget(parent), renderer_(renderer) {
+  input_controller_ = new InputController(this, &parent->app()->settings());
+
   setFocusPolicy(Qt::StrongFocus);
+  setMouseTracking(true);
+}
+
+void RendererWidget::UpdateSettings(double dt) {
+  input_controller_->Update(dt);
 }
 
 void RendererWidget::initializeGL() {
@@ -91,10 +101,16 @@ void RendererWidget::resizeGL(int w, int h) {
 }
 
 void RendererWidget::paintGL() {
+  frame_timer_.restart();
+
   if (renderer_) {
     renderer_->Render();
   }
   DrawTexture();
+
+  const double frame_ms = frame_timer_.nsecsElapsed() * 1e-6;
+  const double fps = 1000.0 / frame_ms;
+  emit FrameStatsUpdated(frame_ms, fps);
 }
 
 void RendererWidget::resizeEvent(QResizeEvent* event) {
@@ -102,6 +118,61 @@ void RendererWidget::resizeEvent(QResizeEvent* event) {
 
   const auto size = event->size();
   emit ViewResized(size.width(), size.height());
+}
+
+void RendererWidget::focusInEvent(QFocusEvent*) {
+  mouse_locked_ = true;
+
+  setCursor(Qt::BlankCursor);
+  grabMouse();
+
+  QCursor::setPos(GetCenter());
+  ignore_next_mouse_event_ = true;
+}
+
+void RendererWidget::focusOutEvent(QFocusEvent* event) {
+  mouse_locked_ = false;
+
+  releaseMouse();
+  unsetCursor();
+}
+
+void RendererWidget::keyPressEvent(QKeyEvent* event) {
+  if (event->key() == Qt::Key_Escape) {
+    clearFocus();
+    releaseMouse();
+    return;
+  }
+  input_controller_->HandleKeyPress(event);
+}
+
+void RendererWidget::keyReleaseEvent(QKeyEvent* event) {
+  input_controller_->HandleKeyRelease(event);
+}
+
+void RendererWidget::mousePressEvent(QMouseEvent* event) {
+  setFocus(Qt::MouseFocusReason);
+  grabMouse();
+  QWidget::mousePressEvent(event);
+}
+
+void RendererWidget::mouseMoveEvent(QMouseEvent* event) {
+  if (!mouse_locked_) {
+    QOpenGLWidget::mouseMoveEvent(event);
+    return;
+  }
+
+  if (ignore_next_mouse_event_) {
+    ignore_next_mouse_event_ = false;
+    return;
+  }
+
+  const auto center = mapFromGlobal(GetCenter());
+  const auto delta = event->pos() - center;
+  input_controller_->MouseMove(delta.x(), delta.y());
+
+  QCursor::setPos(GetCenter());
+  ignore_next_mouse_event_ = true;
 }
 
 void RendererWidget::DrawTexture() {
@@ -116,6 +187,10 @@ void RendererWidget::DrawTexture() {
   glBindVertexArray(0);
 
   shader_.release();
+}
+
+QPoint RendererWidget::GetCenter() const {
+  return mapToGlobal(rect().center());
 }
 
 }  // namespace ui

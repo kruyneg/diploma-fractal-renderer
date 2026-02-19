@@ -1,72 +1,91 @@
 #include "app/settings_manager.h"
 
+#include "render/common/fractals.h"
+
+namespace {
+
+constexpr Vector3d kWorldUp{0.0f, 0.0f, 1.0f};
+
+Vector3d RotateAroundAxis(const Vector3d& v, const Vector3d& axis,
+                          float angle) {
+  const float c = std::cos(angle);
+  const float s = std::sin(angle);
+
+  return v * c + Cross(axis, v) * s + axis * Dot(axis, v) * (1.0f - c);
+}
+
+}  // namespace
+
 SettingsManager::SettingsManager() = default;
 
 void SettingsManager::AddObserver(std::function<void()> observer) {
   observers_.push_back(observer);
 }
 
-void SettingsManager::Zoom(double factor) {
-  if (factor <= 0) {
+void SettingsManager::Zoom(float factor) {
+  if (factor <= 0.0f) {
     return;
   }
 
-  const double center_x = (pending_.view.min_x + pending_.view.max_x) * 0.5;
-  const double center_y = (pending_.view.min_y + pending_.view.max_y) * 0.5;
-
-  const double half_w =
-      (pending_.view.max_x - pending_.view.min_x) * 0.5 / factor;
-  const double half_h =
-      (pending_.view.max_y - pending_.view.min_y) * 0.5 / factor;
-
-  pending_.view.min_x = center_x - half_w;
-  pending_.view.max_x = center_x + half_w;
-  pending_.view.min_y = center_y - half_h;
-  pending_.view.max_y = center_y + half_h;
+  pending_.camera.scale /= factor;
 
   need_commit_ = true;
 }
 
-void SettingsManager::Move(double x, double y) {
-  const double width = pending_.view.max_x - pending_.view.min_x;
-  const double height = pending_.view.max_y - pending_.view.min_y;
+void SettingsManager::Move(float x, float y, float z) {
+  const float dx = x * pending_.camera.scale;
+  const float dy = y * pending_.camera.scale;
+  const float dz = z * pending_.camera.scale;
 
-  const double dx = x * width;
-  const double dy = y * height;
+  pending_.camera.position.z += dz;
 
-  pending_.view.min_x += dx;
-  pending_.view.max_x += dx;
-  pending_.view.min_y += dy;
-  pending_.view.max_y += dy;
+  const auto right = Normalize(Cross(pending_.camera.direction, kWorldUp));
+  pending_.camera.position =
+      pending_.camera.position + pending_.camera.direction * dy + right * dx;
 
+  need_commit_ = true;
+}
+
+void SettingsManager::RotateCamera(float yaw, float pitch) {
+  if (render::Is2DFractal(pending_.fractal.type)) {
+    return;
+  }
+
+  auto dir = pending_.camera.direction;
+
+  dir = RotateAroundAxis(dir, kWorldUp, yaw);
+
+  const auto right = Normalize(Cross(pending_.camera.direction, kWorldUp));
+  dir = RotateAroundAxis(dir, right, pitch);
+
+  if (std::abs(dir.z) > 0.9999) {
+    dir.z = std::copysign(0.9999, dir.z);
+    const float xy = std::sqrt(1.0f - dir.z * dir.z);
+    const float len_xy = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+
+    if (len_xy > 1e-8) {
+      dir.x *= xy / len_xy;
+      dir.y *= xy / len_xy;
+    }
+  }
+
+  pending_.camera.direction = Normalize(dir);
   need_commit_ = true;
 }
 
 void SettingsManager::Resize(uint32_t w, uint32_t h) {
   if (w == 0 || h == 0) return;
 
-  const double center_x = (pending_.view.min_x + pending_.view.max_x) * 0.5;
-  const double center_y = (pending_.view.min_y + pending_.view.max_y) * 0.5;
-
-  double half_width = (pending_.view.max_x - pending_.view.min_x) * 0.5;
-  double half_height = (pending_.view.max_y - pending_.view.min_y) * 0.5;
-
-  double aspect = static_cast<double>(w) / static_cast<double>(h);
-
-  double current_aspect = half_width / half_height;
-
-  half_width = half_height * aspect;
-
-  pending_.view.min_x = center_x - half_width;
-  pending_.view.max_x = center_x + half_width;
-  pending_.view.min_y = center_y - half_height;
-  pending_.view.max_y = center_y + half_height;
+  pending_.camera.aspect = static_cast<float>(w) / h;
 
   need_commit_ = true;
 }
 
 void SettingsManager::SetFractalType(uint8_t type) {
+  const auto current_aspect = pending_.camera.aspect;
+  pending_ = render::RenderSettings{};
   pending_.fractal.type = render::FractalType(type);
+  pending_.camera.aspect = current_aspect;
   need_commit_ = true;
 }
 
@@ -77,6 +96,21 @@ void SettingsManager::SetMaxIterations(uint32_t iterations) {
 
 void SettingsManager::SetJuliaParams(render::JuliaParams params) {
   pending_.fractal.julia = params;
+  need_commit_ = true;
+}
+
+void SettingsManager::SetMandelbulbParams(render::MandelbulbParams params) {
+  pending_.fractal.mandelbulb = params;
+  need_commit_ = true;
+}
+
+void SettingsManager::SetMandelboxParams(render::MandelboxParams params) {
+  pending_.fractal.mandelbox = params;
+  need_commit_ = true;
+}
+
+void SettingsManager::SetJuliabulbParams(render::JuliabulbParams params) {
+  pending_.fractal.juliabulb = params;
   need_commit_ = true;
 }
 

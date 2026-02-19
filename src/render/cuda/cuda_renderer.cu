@@ -2,8 +2,10 @@
 
 #include <stdexcept>
 
+#include "render/common/coloring.h"
+#include "render/common/fractals.h"
+#include "render/common/utils.h"
 #include "render/cuda/utils.h"
-#include "render/fractals.h"
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -13,28 +15,27 @@
 
 namespace {
 
-__global__ void MandelbrotKernel(cudaSurfaceObject_t surf, int w, int h,
-                                 render::RenderSettings settings) {
+constexpr int kMaxSteps = 1000;
+constexpr float kEpsilon = 0.001f;
+constexpr float kMaxDistance = 10.0f;
+
+__global__ void Render2DKernel(cudaSurfaceObject_t surf, int w, int h,
+                               render::RenderSettings settings) {
   int x = blockIdx.x * blockDim.x + threadIdx.x;
   int y = blockIdx.y * blockDim.y + threadIdx.y;
 
   if (x >= w || y >= h) return;
 
-  double fx = static_cast<double>(x) / static_cast<double>(w) *
-                  (settings.view.max_x - settings.view.min_x) +
-              settings.view.min_x;
-  double fy = static_cast<double>(y) / static_cast<double>(h) *
-                  (settings.view.max_y - settings.view.min_y) +
-              settings.view.min_y;
+  const auto pos = render::PixelToPosition(x, y, w, h, settings.camera);
 
   int iteration;
   if (settings.fractal.type == render::FractalType::kMandelbrot) {
-    iteration =
-        render::MandelbrotIterations(fx, fy, settings.fractal.max_iterations);
+    iteration = render::MandelbrotIterations(pos.x, pos.y,
+                                             settings.fractal.max_iterations);
   } else if (settings.fractal.type == render::FractalType::kJulia) {
-    iteration = render::JuliaIterations(fx, fy, settings.fractal.max_iterations,
-                                        settings.fractal.julia.c_re,
-                                        settings.fractal.julia.c_im);
+    iteration = render::JuliaIterations(
+        pos.x, pos.y, settings.fractal.max_iterations,
+        settings.fractal.julia.c_re, settings.fractal.julia.c_im);
   }
   Color color =
       render::ColorFromIter(iteration, settings.fractal.max_iterations,
@@ -42,6 +43,45 @@ __global__ void MandelbrotKernel(cudaSurfaceObject_t surf, int w, int h,
 
   uchar4 c = {color.r, color.g, color.b, color.a};
   surf2Dwrite(c, surf, x * sizeof(Color), y, cudaBoundaryModeTrap);
+}
+
+__global__ void RayMarchingKernel(cudaSurfaceObject_t surf, int w, int h,
+                                  render::RenderSettings settings) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  int idy = blockIdx.y * blockDim.y + threadIdx.y;
+
+  int offsetx = gridDim.x * blockDim.x;
+  int offsety = gridDim.y * blockDim.y;
+
+  for (int y = idy; y < h; y += offsety) {
+    for (int x = idx; x < w; x += offsetx) {
+      const auto ray = MakeRay(x, y, w, h, settings.camera);
+      Color color = {0, 0, 0, 255};
+
+      float t = 0.0f;
+
+      for (int i = 0; i < kMaxSteps; ++i) {
+        const auto pos = ray.position + ray.direction * t;
+        const auto distance = render::CalculateSignedDistance(pos, settings);
+
+        if (distance < kEpsilon * t) {
+          const auto n = render::GetNormal(pos, settings);
+          color = render::GetFractalColor(pos, n, settings.fractal);
+          color = render::Lighting(color, pos, n, settings);
+          break;
+        }
+
+        if (distance > kMaxDistance) {
+          color = {100, 100, 100, 255};
+          break;
+        }
+        t += distance;
+      }
+
+      uchar4 c = {color.r, color.g, color.b, color.a};
+      surf2Dwrite(c, surf, x * sizeof(uchar4), y, cudaBoundaryModeTrap);
+    }
+  }
 }
 
 }  // namespace
@@ -54,7 +94,7 @@ CUDARenderer::~CUDARenderer() = default;
 
 void CUDARenderer::Init(uint32_t target_tex_id) {
   if (initialized_) {
-    throw std::runtime_error("CUDARenderer: double init");
+    throw std::runtime_error("CUDARenderer: float init");
   }
 
 #ifdef _WIN32
@@ -97,9 +137,13 @@ void CUDARenderer::Render() {
   dim3 grid((width_ + block.x - 1) / block.x,
             (height_ + block.y - 1) / block.y);
 
-  MandelbrotKernel<<<grid, block>>>(surf, width_, height_,
+  if (Is2DFractal(settings_provider_->GetSettings().fractal.type)) {
+    Render2DKernel<<<grid, block>>>(surf, width_, height_,
                                     settings_provider_->GetSettings());
-
+  } else {
+    RayMarchingKernel<<<grid, dim3(16, 16)>>>(
+        surf, width_, height_, settings_provider_->GetSettings());
+  }
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
 

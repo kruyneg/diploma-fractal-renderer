@@ -1,10 +1,9 @@
 add_library(render
     renderer.h
-    utils.h
-    fractals.h
     settings_provider.h)
 
 add_subdirectory(cpu)
+add_subdirectory(common)
 
 target_link_libraries(render PUBLIC
     Qt6::OpenGL

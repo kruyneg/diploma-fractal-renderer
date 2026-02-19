@@ -4,6 +4,7 @@
 #include <QSet>
 
 class QKeyEvent;
+class QMouseEvent;
 class SettingsManager;
 
 namespace ui {
@@ -16,6 +17,7 @@ class InputController : QObject {
 
   void HandleKeyPress(QKeyEvent* event);
   void HandleKeyRelease(QKeyEvent* event);
+  void MouseMove(int dx, int dy);
 
   void Update(double delta_seconds);
 

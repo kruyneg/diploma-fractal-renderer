@@ -6,8 +6,9 @@
 
 namespace {
 
-constexpr double kMoveSpeed = 0.25;
-constexpr double kZoomSpeed = 1.2;
+constexpr float kMoveSpeed = 1.0f;
+constexpr float kZoomSpeed = 1.2;
+constexpr float kMouseSensitivity = 0.002;
 
 }  // namespace
 
@@ -29,32 +30,48 @@ void InputController::HandleKeyRelease(QKeyEvent* event) {
   }
 }
 
+void InputController::MouseMove(int dx, int dy) {
+  const float yaw = -dx * kMouseSensitivity;
+  const float pitch = -dy * kMouseSensitivity;
+
+  if (yaw != 0.0f || pitch != 0.0f) {
+    settings_manager_->RotateCamera(yaw, pitch);
+  }
+}
+
 void InputController::Update(double dt) {
   if (!settings_manager_) {
     return;
   }
 
-  double dx = 0.0;
-  double dy = 0.0;
+  float dx = 0.0f;
+  float dy = 0.0f;
+  float dz = 0.0f;
 
-  if (pressed_keys_.contains(Qt::Key_Left)) {
+  if (pressed_keys_.contains(Qt::Key_A)) {
     dx -= kMoveSpeed * dt;
   }
-  if (pressed_keys_.contains(Qt::Key_Right)) {
+  if (pressed_keys_.contains(Qt::Key_D)) {
     dx += kMoveSpeed * dt;
   }
-  if (pressed_keys_.contains(Qt::Key_Down)) {
+  if (pressed_keys_.contains(Qt::Key_S)) {
     dy -= kMoveSpeed * dt;
   }
-  if (pressed_keys_.contains(Qt::Key_Up)) {
+  if (pressed_keys_.contains(Qt::Key_W)) {
     dy += kMoveSpeed * dt;
   }
-
-  if (dx != 0.0 || dy != 0.0) {
-    settings_manager_->Move(dx, dy);
+  if (pressed_keys_.contains(Qt::Key_Q)) {
+    dz -= kMoveSpeed * dt;
+  }
+  if (pressed_keys_.contains(Qt::Key_E)) {
+    dz += kMoveSpeed * dt;
   }
 
-  double zoom = 0.0;
+  if (dx != 0.0f || dy != 0.0f || dz != 0.0f) {
+    settings_manager_->Move(dx, dy, dz);
+  }
+
+  float zoom = 0.0f;
 
   if (pressed_keys_.contains(Qt::Key_Plus) ||
       pressed_keys_.contains(Qt::Key_Equal)) {
@@ -65,7 +82,7 @@ void InputController::Update(double dt) {
     zoom -= kZoomSpeed * dt;
   }
 
-  if (zoom != 0.0) {
+  if (zoom != 0.0f) {
     settings_manager_->Zoom(std::exp(zoom));
   }
 
@@ -73,6 +90,14 @@ void InputController::Update(double dt) {
     settings_manager_->SetFractalType(0);
   } else if (pressed_keys_.contains(Qt::Key_2)) {
     settings_manager_->SetFractalType(1);
+  } else if (pressed_keys_.contains(Qt::Key_3)) {
+    settings_manager_->SetFractalType(2);
+  } else if (pressed_keys_.contains(Qt::Key_4)) {
+    settings_manager_->SetFractalType(3);
+  } else if (pressed_keys_.contains(Qt::Key_5)) {
+    settings_manager_->SetFractalType(4);
+  } else if (pressed_keys_.contains(Qt::Key_6)) {
+    settings_manager_->SetFractalType(5);
   }
 }
 
